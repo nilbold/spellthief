@@ -8,3 +8,4 @@ publish = false
 
 [dependencies]
 anyhow = "1.0"
+hecs = "0.10"
