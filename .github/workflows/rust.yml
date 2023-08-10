@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+        - stable
+        features:
+        - --all-features
+        - --no-default-features
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: ${{ matrix.rust }}
+        override: true
+
+    - uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: -p spellthief --all-targets ${{ matrix.features }}
+
+    - uses: actions-rs/cargo@v1
+      with:
+        command: test
+        args: -p spellthief ${{ matrix.features }}
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+        components: rustfmt, clippy
+
+    - uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: --all -- --check
+
+    - uses: actions-rs/cargo@v1
+      if: always()
+      with:
+        command: clippy
+        args: --all-features -- -D warnings

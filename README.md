@@ -1,6 +1,7 @@
 # spellthief
 
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/nilbold/spellthief#license)
+[![CI](https://github.com/nilbold/spellthief/workflows/CI/badge.svg)](https://github.com/nilbold/spellthief/actions)
 
 just a small 2d game project
 
