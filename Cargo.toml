@@ -9,3 +9,5 @@ publish = false
 [dependencies]
 anyhow = "1.0"
 hecs = "0.10"
+winit = "0.28"
+winit_input_helper = "0.14"
