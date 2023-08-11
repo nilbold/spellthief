@@ -1,8 +1,9 @@
 use anyhow::Result;
 
-pub mod component;
-pub mod game;
-pub mod math;
+mod component;
+mod game;
+mod math;
+mod util;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const GIT_HASH: &str = env!("GIT_HASH");
