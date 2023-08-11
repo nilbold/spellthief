@@ -17,7 +17,7 @@ pub struct State {
 /// Enters the main game loop.
 pub fn main_loop() -> Result<()> {
     let event_loop = EventLoop::new();
-    let _window = {
+    let window = {
         let size = LogicalSize::new(320.0, 240.0);
         let scaled = LogicalSize::new(size.width * 3.0, size.height * 3.0);
         WindowBuilder::new()

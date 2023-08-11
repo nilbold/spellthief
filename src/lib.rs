@@ -1,5 +1,7 @@
 use anyhow::Result;
 
+use log::info;
+
 mod component;
 mod game;
 mod math;
@@ -9,7 +11,8 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const GIT_HASH: &str = env!("GIT_HASH");
 
 pub fn run() -> Result<()> {
-    println!("spellthief v{} [{}]", VERSION, GIT_HASH);
+    env_logger::init();
+    info!("spellthief v{} [{}]", VERSION, GIT_HASH);
 
     game::main_loop()
 }
