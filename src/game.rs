@@ -7,7 +7,7 @@ use pixels::{Pixels, SurfaceTexture};
 use winit::{dpi::LogicalSize, event::Event, event_loop::EventLoop, window::WindowBuilder};
 use winit_input_helper::WinitInputHelper as Input;
 
-use crate::component::Spatial;
+use crate::component::{Physics, Player, Spatial};
 use crate::util::TickRate;
 
 const WIDTH: u32 = 320;
@@ -43,7 +43,7 @@ pub fn main_loop() -> Result<()> {
 
     let mut world = World::new();
 
-    let player = world.spawn((Spatial::default(),));
+    let player = world.spawn((Player, Spatial::new(0, 0), Physics::default()));
     debug!("player entity generated ({})", player.id());
 
     let mut state = State { world, player };
@@ -92,7 +92,7 @@ fn update(_state: &mut State, _input: &mut Input) {}
 /// Render the current game state to the screen.
 ///
 /// Texture format for the render frame is assumed to be RGBA8.
-fn render(frame: &mut [u8], _state: &mut State, _lag: Duration) {
+fn render(frame: &mut [u8], state: &mut State, _lag: Duration) {
     for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
         let x = (i % WIDTH as usize) as i32;
         let y = (i / WIDTH as usize) as i32;
@@ -101,5 +101,14 @@ fn render(frame: &mut [u8], _state: &mut State, _lag: Duration) {
         let g = (y * 255 / HEIGHT as i32) as u8;
         let rgba = [r, g, 0xff, 0xff];
         pixel.copy_from_slice(&rgba);
+    }
+
+    // just for testing, drawing a 32x32 square for each entity
+    for (_id, pos) in state.world.query::<&Spatial>().iter() {
+        let pos = pos.screen();
+        for y in 0..32 {
+            let i = (pos.x * 4 + pos.y * WIDTH as i32 * 4 + y * WIDTH as i32 * 4) as usize;
+            frame[i..i + 32 * 4].iter_mut().for_each(|p| *p = 0);
+        }
     }
 }
