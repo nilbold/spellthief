@@ -5,6 +5,7 @@ use log::info;
 mod component;
 mod game;
 mod math;
+mod render;
 mod util;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
