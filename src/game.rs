@@ -31,7 +31,7 @@ pub fn main_loop() -> Result<()> {
     let mut tick = TickRate::new(Duration::from_millis(20));
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
-            if let Err(why) = render.draw(&state, tick.lag()) {
+            if let Err(why) = render.draw_world(&state, tick.lag()) {
                 error!("render.draw failed: {why}");
                 control_flow.set_exit();
                 return;

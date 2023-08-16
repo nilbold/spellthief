@@ -3,6 +3,7 @@ use anyhow::Result;
 use log::info;
 
 mod component;
+mod embed;
 mod game;
 mod math;
 mod render;

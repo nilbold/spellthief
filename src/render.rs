@@ -7,6 +7,10 @@ use winit::window::Window;
 use crate::component::Spatial;
 use crate::game::State;
 
+pub use sprite::Sprite;
+
+pub mod sprite;
+
 /// Manages render state and drawing.
 pub struct Renderer {
     width: u32,
@@ -40,7 +44,7 @@ impl Renderer {
     }
 
     /// Render the current game state to the screen.
-    pub fn draw(&mut self, state: &State, _lag: Duration) -> Result<()> {
+    pub fn draw_world(&mut self, state: &State, _lag: Duration) -> Result<()> {
         let frame = self.pixels.frame_mut();
 
         // texture format for the render frame is assumed to be RGBA8
@@ -54,14 +58,9 @@ impl Renderer {
             pixel.copy_from_slice(&rgba);
         }
 
-        // just for testing, drawing a 32x32 square for each entity
         for (_id, pos) in state.world.query::<&Spatial>().iter() {
             let pos = pos.screen();
-            for y in 0..32 {
-                let i = (pos.x * 4 + pos.y * self.width as i32 * 4 + y * self.width as i32 * 4)
-                    as usize;
-                frame[i..i + 32 * 4].iter_mut().for_each(|p| *p = 0);
-            }
+            Sprite::Test(0).blit(frame, self.width, self.height, pos.x, pos.y);
         }
 
         self.pixels.render()?;
