@@ -7,6 +7,39 @@ pub struct EmbeddedSprite<'a> {
     pub data: &'a [u8],
 }
 
+impl EmbeddedSprite<'_> {
+    pub fn row(&self, r: usize) -> EmbeddedSpriteIter {
+        EmbeddedSpriteIter {
+            sprite: self,
+            index: 0,
+            row: r,
+        }
+    }
+}
+
+pub struct EmbeddedSpriteIter<'a> {
+    sprite: &'a EmbeddedSprite<'a>,
+    index: usize,
+    row: usize,
+}
+
+impl<'a> Iterator for EmbeddedSpriteIter<'a> {
+    type Item = u8;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= self.sprite.width {
+            return None;
+        }
+
+        let (i, r) = (self.index / 4, self.index % 4);
+        let i = i + self.row * (self.sprite.width / 4);
+
+        self.index += 1;
+
+        Some(self.sprite.data[i] >> ((3 - r) * 2) & 3)
+    }
+}
+
 pub const SPRITE_TEST: EmbeddedSprite = EmbeddedSprite {
     width: 20,
     height: 28,
