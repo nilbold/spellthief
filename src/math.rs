@@ -1,3 +1,5 @@
+pub use aabb::BoundingBox;
 pub use vector::Vector;
 
-mod vector;
+pub mod aabb;
+pub mod vector;

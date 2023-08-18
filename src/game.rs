@@ -4,7 +4,7 @@ use anyhow::Result;
 use log::{debug, error};
 use winit::{
     dpi::LogicalSize,
-    event::Event,
+    event::{Event, WindowEvent},
     event_loop::EventLoop,
     window::{Window, WindowBuilder},
 };
@@ -29,6 +29,7 @@ pub fn main_loop() -> Result<()> {
     let mut state = State::new();
 
     let mut tick = TickRate::new(Duration::from_millis(20));
+    let mut window_events: Vec<WindowEvent<'static>> = Vec::new();
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
             if let Err(why) = render.draw_world(&state, tick.lag()) {
@@ -38,34 +39,47 @@ pub fn main_loop() -> Result<()> {
             }
         }
 
-        if input.update(&event) {
-            tick.step();
-
-            if let Some(size) = input.window_resized() {
-                if let Err(why) = render.resize(size.width, size.height) {
-                    error!("pixels.resize_surface failed: {why}");
-                    control_flow.set_exit();
-                    return;
+        match event {
+            Event::NewEvents(_) => window_events.clear(),
+            Event::WindowEvent { event, .. } => {
+                if let Some(e) = event.to_static() {
+                    window_events.push(e);
                 }
             }
+            // we'll execute the rest of the closure once all events are handled
+            Event::MainEventsCleared => (),
+            _ => return,
+        }
 
-            if input.close_requested() {
-                debug!("window close requested");
+        input.step_with_window_events(window_events.as_slice());
+        tick.step();
+
+        if let Some(size) = input.window_resized() {
+            if let Err(why) = render.resize(size.width, size.height) {
+                error!("pixels.resize_surface failed: {why}");
                 control_flow.set_exit();
                 return;
             }
-
-            while tick.should_update() {
-                update(&mut state, &mut input);
-            }
-
-            window.request_redraw();
         }
+
+        if input.close_requested() {
+            debug!("window close requested");
+            control_flow.set_exit();
+            return;
+        }
+
+        while tick.should_update() {
+            update(&mut state, &mut input);
+        }
+
+        window.request_redraw();
     });
 }
 
 /// Update a single game frame.
-fn update(_state: &mut State, _input: &mut Input) {}
+fn update(state: &mut State, _input: &mut Input) {
+    state.physics_step();
+}
 
 fn init_window(title: &str, width: u32, height: u32, scaled: u32) -> (EventLoop<()>, Window) {
     let event_loop = EventLoop::new();

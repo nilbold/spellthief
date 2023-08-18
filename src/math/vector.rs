@@ -12,7 +12,7 @@ impl Vector {
     /// How many fractions per unit is used with fixed point scaling.
     ///
     /// This is defined in powers of two, ie. F = 4, 2^F = 16.
-    pub const F: i32 = 4;
+    pub const F: i32 = 5;
 
     pub fn new(x: i32, y: i32) -> Self {
         Vector { x, y }
