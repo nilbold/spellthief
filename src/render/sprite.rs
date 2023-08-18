@@ -12,6 +12,9 @@ impl Sprite {
             Self::Test(_) => embed::SPRITE_TEST,
         };
 
+        let x = x - sprite.offset.0;
+        let y = y - sprite.offset.1;
+
         // we'll need to clip the sprite if it's partially off screen
         let (cl, ct, cr, cb) = {
             let cl: usize = (0 - x).max(0).try_into().unwrap();

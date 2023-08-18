@@ -6,6 +6,7 @@ use winit::window::Window;
 
 use crate::component::Spatial;
 use crate::game::State;
+use crate::math::Vector;
 
 pub use sprite::Sprite;
 
@@ -15,6 +16,7 @@ pub mod sprite;
 pub struct Renderer {
     width: u32,
     height: u32,
+    offset: Vector,
     pixels: Pixels,
 }
 
@@ -26,9 +28,12 @@ impl Renderer {
             Pixels::new(width, height, surface)?
         };
 
+        let offset = Vector::new(width as i32 / 2, height as i32 / 2);
+
         Ok(Renderer {
             width,
             height,
+            offset,
             pixels,
         })
     }
@@ -59,7 +64,12 @@ impl Renderer {
         }
 
         for (_id, pos) in state.world.query::<&Spatial>().iter() {
-            let pos = pos.screen();
+            let pos = {
+                let mut pos = pos.screen() + self.offset;
+                pos.y = self.height as i32 - pos.y;
+                pos
+            };
+
             Sprite::Test(0).blit(frame, self.width, self.height, pos.x, pos.y);
         }
 

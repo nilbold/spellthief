@@ -4,6 +4,7 @@
 pub struct EmbeddedSprite<'a> {
     pub width: usize,
     pub height: usize,
+    pub offset: (i32, i32),
     pub data: &'a [u8],
 }
 
@@ -43,6 +44,7 @@ impl<'a> Iterator for EmbeddedSpriteIter<'a> {
 pub const SPRITE_TEST: EmbeddedSprite = EmbeddedSprite {
     width: 20,
     height: 28,
+    offset: (10, 28),
     data: &[
         0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x15, 0x55, 0x00, 0x00,
