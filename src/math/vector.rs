@@ -1,4 +1,5 @@
 use std::borrow::Borrow;
+use std::convert::From;
 use std::ops::{Add, Sub};
 
 /// Defines a magnitude and direction in 2d space.
@@ -77,6 +78,12 @@ where
     #[allow(clippy::op_ref)]
     fn sub(self, other: B) -> Self::Output {
         &self - other
+    }
+}
+
+impl From<(i32, i32)> for Vector {
+    fn from(item: (i32, i32)) -> Self {
+        Vector::new(item.0, item.1)
     }
 }
 

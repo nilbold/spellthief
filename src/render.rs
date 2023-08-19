@@ -59,7 +59,7 @@ impl Renderer {
 
             let r = (x * 255 / self.width as i32) as u8;
             let g = (y * 255 / self.height as i32) as u8;
-            let rgba = [r, g, 0xff, 0xff];
+            let rgba = [r, g, 255 - r, 0xff];
             pixel.copy_from_slice(&rgba);
         }
 

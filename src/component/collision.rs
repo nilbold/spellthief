@@ -1,4 +1,4 @@
-use crate::math::{BoundingBox, Vector};
+use crate::math::{collision::BoundingBox, Vector};
 
 #[derive(Copy, Clone, Default, Eq, PartialEq)]
 pub struct Collision {
@@ -6,9 +6,9 @@ pub struct Collision {
 }
 
 impl Collision {
-    pub fn new(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Self {
+    pub fn new<V: Into<Vector>>(pos: V, dim: V) -> Self {
         Collision {
-            bounds: BoundingBox::new(Vector::new(min_x, min_y), Vector::new(max_x, max_y)),
+            bounds: BoundingBox::new(pos, dim),
         }
     }
 }

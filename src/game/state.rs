@@ -2,7 +2,7 @@ use hecs::{Entity, World};
 use log::debug;
 
 use crate::component::{Collision, Physics, Player, Spatial};
-use crate::math::Vector;
+use crate::math::{collision::BoundingBox, Vector};
 
 /// Game state.
 pub struct State {
@@ -16,8 +16,8 @@ impl State {
         let player = world.spawn((
             Player,
             Spatial::new(0, 0),
-            Physics::new(10, 10),
-            Collision::new(-10 << Vector::F, 0, 10 << Vector::F, 28 << Vector::F),
+            Physics::new(100, 100),
+            Collision::new((0, 0), (10 << Vector::F, 14 << Vector::F)),
         ));
         debug!("player entity generated ({})", player.id());
 
@@ -25,10 +25,17 @@ impl State {
     }
 
     pub fn physics_step(&mut self) {
-        let wall_right = 160 << Vector::F;
-        let wall_left = -wall_right;
-        let wall_top = 120 << Vector::F;
-        let wall_bottom = -wall_top;
+        // hardcoding screen half width/height and wall thickness here for testing
+        const HWIDTH: i32 = 160 << Vector::F;
+        const HHEIGHT: i32 = 120 << Vector::F;
+        const THICK: i32 = 20 << Vector::F;
+
+        let walls = [
+            BoundingBox::new((HWIDTH + THICK, 0), (THICK, HHEIGHT)),
+            BoundingBox::new((-(HWIDTH + THICK), 0), (THICK, HHEIGHT)),
+            BoundingBox::new((0, HHEIGHT + THICK), (HWIDTH, THICK)),
+            BoundingBox::new((0, -(HHEIGHT + THICK)), (HWIDTH, THICK)),
+        ];
 
         for (_id, (pos, phys, coll)) in self
             .world
@@ -36,21 +43,16 @@ impl State {
         {
             *pos = *pos + phys.vel;
 
-            if pos.y + coll.bounds.max.y > wall_top {
-                pos.y = wall_top - coll.bounds.max.y;
-                phys.vel.y = -phys.vel.y;
-            }
-            if pos.y + coll.bounds.min.y < wall_bottom {
-                pos.y = wall_bottom - coll.bounds.min.y;
-                phys.vel.y = -phys.vel.y;
-            }
-            if pos.x + coll.bounds.max.x > wall_right {
-                pos.x = wall_right - coll.bounds.max.x;
-                phys.vel.x = -phys.vel.x;
-            }
-            if pos.x + coll.bounds.min.x < wall_left {
-                pos.x = wall_left - coll.bounds.min.x;
-                phys.vel.x = -phys.vel.x;
+            for wall in walls.iter() {
+                let bounds = coll.bounds + pos.0;
+                if let Some(hit) = bounds.overlap(wall) {
+                    *pos = *pos - hit.delta;
+                    if hit.delta.x.abs() > 0 {
+                        phys.vel.x = -phys.vel.x;
+                    } else if hit.delta.y.abs() > 0 {
+                        phys.vel.y = -phys.vel.y;
+                    }
+                }
             }
         }
     }
