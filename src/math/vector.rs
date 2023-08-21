@@ -24,8 +24,8 @@ impl Vector {
     }
 
     /// The vector is screen space.
-    pub fn screen(&self) -> Self {
-        Vector::new(self.x >> Vector::F, self.y >> Vector::F)
+    pub fn screen(&self) -> (i32, i32) {
+        (self.x >> Vector::F, self.y >> Vector::F)
     }
 }
 
