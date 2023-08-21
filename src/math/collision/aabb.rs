@@ -46,7 +46,7 @@ impl BoundingBox {
         } else {
             let sy = if dy.is_positive() { 1 } else { -1 };
             hit.delta.y = py * sy;
-            hit.normal.y = sy;
+            hit.normal.y = sy << Vector::F;
             hit.pos.x = other.pos.x;
             hit.pos.y = self.pos.y + self.dim.y * sy;
         }
@@ -133,5 +133,15 @@ mod tests {
         let offset = Vector::new(8, 0);
 
         assert!((a + offset).overlap(&b).is_some());
+    }
+
+    #[test]
+    fn bounding_box_normal() {
+        let a = BoundingBox::new((0, 5), (3, 3));
+        let b = BoundingBox::new((0, 0), (3, 3));
+
+        let hit = a.overlap(&b).expect("a.overlap(b)");
+
+        assert_eq!(hit.normal.y, -(1 << Vector::F));
     }
 }
