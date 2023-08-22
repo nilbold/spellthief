@@ -15,7 +15,7 @@ use crate::util::TickRate;
 
 pub use state::State;
 
-mod state;
+pub mod state;
 
 const WIDTH: u32 = 320;
 const HEIGHT: u32 = 240;
@@ -68,17 +68,13 @@ pub fn main_loop() -> Result<()> {
             return;
         }
 
+        state.input(&mut input);
         while tick.should_update() {
-            update(&mut state, &mut input);
+            state.physics_step();
         }
 
         window.request_redraw();
     });
-}
-
-/// Update a single game frame.
-fn update(state: &mut State, _input: &mut Input) {
-    state.physics_step();
 }
 
 fn init_window(title: &str, width: u32, height: u32, scaled: u32) -> (EventLoop<()>, Window) {
