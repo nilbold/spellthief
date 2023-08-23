@@ -1,6 +1,6 @@
 use crate::render::Surface;
 
-pub fn corners(surface: Surface, min: (i32, i32), max: (i32, i32), color: [u8; 4]) {
+pub fn corners(surface: &mut Surface, min: (i32, i32), max: (i32, i32), color: [u8; 4]) {
     let clip = {
         if let Some(c) = surface.clip(min, max) {
             c

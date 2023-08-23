@@ -4,8 +4,18 @@ pub enum MoveDirection {
     #[default]
     Right,
     Left,
-    Up,
-    Down,
+}
+
+impl MoveDirection {
+    #[allow(dead_code)]
+    pub fn is_right(&self) -> bool {
+        *self == MoveDirection::Right
+    }
+
+    #[allow(dead_code)]
+    pub fn is_left(&self) -> bool {
+        *self == MoveDirection::Left
+    }
 }
 
 /// Entity Controller, can be Player or AI driven.

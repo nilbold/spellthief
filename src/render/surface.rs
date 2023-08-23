@@ -44,4 +44,10 @@ impl<'a> Surface<'a> {
             bottom,
         })
     }
+
+    pub fn clear(&mut self, color: [u8; 4]) {
+        for pixel in self.buffer.chunks_exact_mut(4) {
+            pixel.copy_from_slice(&color);
+        }
+    }
 }

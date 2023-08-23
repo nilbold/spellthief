@@ -4,7 +4,7 @@ use anyhow::Result;
 use pixels::{Pixels, SurfaceTexture};
 use winit::window::Window;
 
-use crate::component::{Collision, Spatial};
+use crate::component::{Collision, Controller, Spatial};
 use crate::game::State;
 
 pub use sprite::Sprite;
@@ -52,24 +52,18 @@ impl Renderer {
 
     /// Render the current game state to the screen.
     pub fn draw_world(&mut self, state: &State, _lag: Duration) -> Result<()> {
-        let frame = self.pixels.frame_mut();
+        let mut surface = Surface::new(self.pixels.frame_mut(), self.width, self.height);
+        surface.clear([0x20, 0x20, 0x30, 0xff]);
 
-        // texture format for the render frame is assumed to be RGBA8
-        for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
-            let x = (i % self.width as usize) as i32;
-            let y = (i / self.width as usize) as i32;
-
-            let r = (x * 64 / self.width as i32) as u8;
-            let g = (y * 64 / self.height as i32) as u8;
-            let rgba = [r, g, 64 - r, 0xff];
-            pixel.copy_from_slice(&rgba);
-        }
-
-        for (_entity, pos) in state.world.query::<&Spatial>().iter() {
+        for (_entity, (pos, conn)) in state
+            .world
+            .query::<(&Spatial, Option<&Controller>)>()
+            .iter()
+        {
             let pos = apply_camera(pos.screen(), self.offset, Some(self.height as i32));
-            let surface = Surface::new(frame, self.width, self.height);
+            let flip = conn.map_or(false, |c| c.direction.is_left());
 
-            Sprite::Test(0).blit(surface, pos);
+            Sprite::Test(0).blit(&mut surface, pos, flip);
         }
 
         // lets draw collision shapes, for testing
@@ -87,9 +81,7 @@ impl Renderer {
                     (pos.0 + dim.0, pos.1 + dim.1),
                 )
             };
-            let surface = Surface::new(frame, self.width, self.height);
-
-            shapes::corners(surface, min, max, [0x00, 0xff, 0xff, 0xff]);
+            shapes::corners(&mut surface, min, max, [0x00, 0xff, 0xff, 0xff]);
         }
 
         self.pixels.render()?;

@@ -8,7 +8,7 @@ pub enum Sprite {
 }
 
 impl Sprite {
-    pub fn blit(&self, surface: Surface, pos: (i32, i32)) {
+    pub fn blit(&self, surface: &mut Surface, pos: (i32, i32), flip: bool) {
         let sprite = match self {
             Self::Test(_) => embed::SPRITE_TEST,
         };
@@ -32,7 +32,15 @@ impl Sprite {
 
         // copy one line at a time to the buffer
         for line in clip.top..sprite.height - clip.bottom {
-            let row_iter = sprite.row(line).skip(clip.left).take(sw);
+            let (mut temp_iter1, mut temp_iter2);
+
+            let row_iter: &mut dyn Iterator<Item = _> = if flip {
+                temp_iter1 = sprite.row(line).rev().skip(clip.left).take(sw);
+                &mut temp_iter1
+            } else {
+                temp_iter2 = sprite.row(line).skip(clip.left).take(sw);
+                &mut temp_iter2
+            };
 
             let i = (x + (y + line - clip.top) * fw) * 4;
             for (pixel, c) in surface.buffer[i..i + sw * 4].chunks_mut(4).zip(row_iter) {

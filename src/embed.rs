@@ -12,7 +12,8 @@ impl EmbeddedSprite<'_> {
     pub fn row(&self, r: usize) -> EmbeddedSpriteIter {
         EmbeddedSpriteIter {
             sprite: self,
-            index: 0,
+            left: 0,
+            right: self.width,
             row: r,
         }
     }
@@ -20,26 +21,50 @@ impl EmbeddedSprite<'_> {
 
 pub struct EmbeddedSpriteIter<'a> {
     sprite: &'a EmbeddedSprite<'a>,
-    index: usize,
+    left: usize,
+    right: usize,
     row: usize,
+}
+
+impl<'a> EmbeddedSpriteIter<'a> {
+    fn index(&self, pos: usize) -> (usize, usize) {
+        ((pos / 4) + self.row * (self.sprite.width / 4), pos % 4)
+    }
 }
 
 impl<'a> Iterator for EmbeddedSpriteIter<'a> {
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index >= self.sprite.width {
+        if self.left >= self.right {
             return None;
         }
 
-        let (i, r) = (self.index / 4, self.index % 4);
-        let i = i + self.row * (self.sprite.width / 4);
+        let (i, r) = self.index(self.left);
+        self.left += 1;
 
-        self.index += 1;
+        Some(self.sprite.data[i] >> ((3 - r) * 2) & 3)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.sprite.width, Some(self.sprite.width))
+    }
+}
+
+impl<'a> DoubleEndedIterator for EmbeddedSpriteIter<'a> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        if self.right <= self.left {
+            return None;
+        }
+
+        let (i, r) = self.index(self.right-1);
+        self.right -= 1;
 
         Some(self.sprite.data[i] >> ((3 - r) * 2) & 3)
     }
 }
+
+impl<'a> ExactSizeIterator for EmbeddedSpriteIter<'a> {}
 
 pub const SPRITE_TEST: EmbeddedSprite = EmbeddedSprite {
     width: 20,

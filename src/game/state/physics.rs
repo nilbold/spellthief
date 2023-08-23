@@ -64,7 +64,6 @@ impl State {
                 match conn.direction {
                     Left => *pos = *pos + Vector::new(-speed, 0),
                     Right => *pos = *pos + Vector::new(speed, 0),
-                    _ => (),
                 }
             }
 
