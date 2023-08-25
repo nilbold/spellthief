@@ -9,7 +9,7 @@ pub struct Spatial(pub Vector);
 
 impl Spatial {
     pub fn new(x: i32, y: i32) -> Self {
-        Spatial(Vector::new(x, y))
+        Spatial(Vector::from((x, y)))
     }
 }
 

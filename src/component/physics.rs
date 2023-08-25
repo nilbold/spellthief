@@ -11,8 +11,8 @@ pub struct Physics {
 impl Physics {
     pub fn new(x: i32, y: i32) -> Self {
         Physics {
-            vel: Vector::new(x, y),
-            speed: 100 * (1 << Vector::F),
+            vel: Vector::from((x, y)),
+            speed: 100,
             on_floor: false,
         }
     }

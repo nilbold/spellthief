@@ -4,7 +4,6 @@ use log::debug;
 use winit::event::VirtualKeyCode;
 
 use crate::component::{Collision, Controller, Physics, Player, Spatial};
-use crate::math::Vector;
 
 use input::InputActions;
 
@@ -26,7 +25,7 @@ impl State {
             Spatial::new(0, 0),
             Controller::default(),
             Physics::new(0, 0),
-            Collision::new((0, 0), (10 << Vector::F, 14 << Vector::F)),
+            Collision::new((0, 0), (10, 14)),
         ));
         debug!("player entity generated ({})", player.id());
 

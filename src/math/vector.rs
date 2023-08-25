@@ -2,30 +2,50 @@ use std::borrow::Borrow;
 use std::convert::From;
 use std::ops::{Add, Sub};
 
+use crate::math::Scaled;
+
 /// Defines a magnitude and direction in 2d space.
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub struct Vector {
-    pub x: i32,
-    pub y: i32,
+    pub x: Scaled,
+    pub y: Scaled,
 }
 
 impl Vector {
-    /// How many fractions per unit is used with fixed point scaling.
-    ///
-    /// This is defined in powers of two, ie. F = 4, 2^F = 16.
-    pub const F: i32 = 5;
-
-    pub fn new(x: i32, y: i32) -> Self {
-        Vector { x, y }
+    pub const fn zero() -> Self {
+        Vector {
+            x: Scaled::zero(),
+            y: Scaled::zero(),
+        }
     }
 
-    pub fn zero() -> Self {
-        Vector::new(0, 0)
+    /// The vector in screen space.
+    pub const fn screen(&self) -> (i32, i32) {
+        (self.x.unit(), self.y.unit())
     }
+}
 
-    /// The vector is screen space.
-    pub fn screen(&self) -> (i32, i32) {
-        (self.x >> Vector::F, self.y >> Vector::F)
+macro_rules! from_impl {
+    ($($t:ty)*) => ($(
+        impl From<($t, $t)> for Vector {
+            fn from(item: ($t, $t)) -> Self {
+                Vector {
+                    x: Scaled::from(item.0),
+                    y: Scaled::from(item.1),
+                }
+            }
+        }
+    )*)
+}
+
+from_impl! { u8 u16 u32 i8 i16 i32 }
+
+impl From<(Scaled, Scaled)> for Vector {
+    fn from(item: (Scaled, Scaled)) -> Self {
+        Vector {
+            x: item.0,
+            y: item.1,
+        }
     }
 }
 
@@ -81,21 +101,15 @@ where
     }
 }
 
-impl From<(i32, i32)> for Vector {
-    fn from(item: (i32, i32)) -> Self {
-        Vector::new(item.0, item.1)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn vector_ops() {
-        let a = Vector::new(1, 2);
-        let b = Vector::new(2, 1);
-        let c = Vector::new(1, -1);
+        let a = Vector::from((1, 2));
+        let b = Vector::from((2, 1));
+        let c = Vector::from((1, -1));
 
         assert_eq!(a - b + c, Vector::zero());
         assert_eq!(&a - &b + &c, Vector::zero());

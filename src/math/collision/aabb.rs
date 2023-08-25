@@ -2,7 +2,7 @@ use std::borrow::Borrow;
 use std::ops::{Add, Sub};
 
 use crate::math::collision::Hit;
-use crate::math::Vector;
+use crate::math::{Scaled, Vector};
 
 /// Axis-Aligned Bounding Box
 ///
@@ -25,28 +25,28 @@ impl BoundingBox {
         let dx = other.pos.x - self.pos.x;
         let px = (other.dim.x + self.dim.x) - dx.abs();
 
-        if px <= 0 {
+        if px <= Scaled::zero() {
             return None;
         }
 
         let dy = other.pos.y - self.pos.y;
         let py = (other.dim.y + self.dim.y) - dy.abs();
-        if py <= 0 {
+        if py <= Scaled::zero() {
             return None;
         }
 
         let mut hit = Hit::default();
 
         if px < py {
-            let sx = if dx.is_positive() { 1 } else { -1 };
+            let sx = if dx > Scaled::zero() { 1 } else { -1 };
             hit.delta.x = px * sx;
-            hit.normal.x = sx << Vector::F;
+            hit.normal.x = Scaled::from(sx);
             hit.pos.x = self.pos.x + self.dim.x * sx;
             hit.pos.y = other.pos.y;
         } else {
-            let sy = if dy.is_positive() { 1 } else { -1 };
+            let sy = if dy > Scaled::zero() { 1 } else { -1 };
             hit.delta.y = py * sy;
-            hit.normal.y = sy << Vector::F;
+            hit.normal.y = Scaled::from(sy);
             hit.pos.x = other.pos.x;
             hit.pos.y = self.pos.y + self.dim.y * sy;
         }
@@ -130,7 +130,7 @@ mod tests {
 
         assert_eq!(a.overlap(&b), None);
 
-        let offset = Vector::new(8, 0);
+        let offset = Vector::from((8, 0));
 
         assert!((a + offset).overlap(&b).is_some());
     }
@@ -142,6 +142,6 @@ mod tests {
 
         let hit = a.overlap(&b).expect("a.overlap(b)");
 
-        assert_eq!(hit.normal.y, -(1 << Vector::F));
+        assert_eq!(hit.normal.y, Scaled::from(-1));
     }
 }
