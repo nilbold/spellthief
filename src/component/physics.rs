@@ -5,7 +5,6 @@ use crate::math::Vector;
 pub struct Physics {
     pub vel: Vector,
     pub speed: i32,
-    pub on_floor: bool,
 }
 
 impl Physics {
@@ -13,7 +12,6 @@ impl Physics {
         Physics {
             vel: Vector::from((x, y)),
             speed: 100,
-            on_floor: false,
         }
     }
 }

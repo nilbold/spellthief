@@ -1,9 +1,9 @@
-use crate::component::{Collision, Controller, Physics, Spatial};
+use crate::component::{Collision, Controller, CoyoteTime, Physics, Spatial};
 use crate::game::State;
 use crate::math::{collision::BoundingBox, Scaled, Vector};
 
 impl State {
-    pub fn physics_step(&mut self) {
+    pub fn process_physics(&mut self) {
         // hardcoding screen half width/height and wall thickness here for testing
         const HWIDTH: i32 = 160;
         const HHEIGHT: i32 = 120;
@@ -16,14 +16,25 @@ impl State {
             BoundingBox::new((0, -(HHEIGHT + THICK)), (HWIDTH, THICK)),
         ];
 
+        for (_id, (conn, yote)) in self.world.query_mut::<(&mut Controller, &mut CoyoteTime)>() {
+            if yote.pre_jump() {
+                conn.jumping = true;
+            }
+
+            if conn.on_floor {
+                yote.reset();
+            } else {
+                yote.tick();
+            }
+        }
+
         for (_id, (pos, phys, conn, coll)) in
             self.world
                 .query_mut::<(&mut Spatial, &mut Physics, &mut Controller, &Collision)>()
         {
-            if phys.on_floor && (conn.jumping || conn.pre_jump > 0) {
+            if conn.on_floor && conn.jumping {
                 phys.vel.y = Scaled::from(3);
-                phys.on_floor = false;
-                conn.pre_jump = 0;
+                conn.on_floor = false;
             }
 
             // hardcoding timesteps here for now
@@ -34,7 +45,7 @@ impl State {
 
             // lets apply friction
             let friction = {
-                if phys.on_floor {
+                if conn.on_floor {
                     GRAVITY / DELTA
                 } else {
                     GRAVITY / DELTA / 2
@@ -74,7 +85,7 @@ impl State {
                 if let Some(hit) = bounds.overlap(wall) {
                     *pos = *pos - hit.delta;
                     if hit.normal.y == -Scaled::from(1) {
-                        phys.on_floor = true;
+                        conn.on_floor = true;
                         phys.vel.y = Scaled::zero();
                     }
                 }

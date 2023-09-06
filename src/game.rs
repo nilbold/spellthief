@@ -15,6 +15,7 @@ use crate::util::TickRate;
 
 pub use state::State;
 
+//pub mod events;
 pub mod state;
 
 const WIDTH: u32 = 320;
@@ -70,7 +71,7 @@ pub fn main_loop() -> Result<()> {
 
         state.input(&mut input);
         while tick.should_update() {
-            state.physics_step();
+            state.update();
         }
 
         window.request_redraw();

@@ -24,8 +24,7 @@ pub struct Controller {
     pub locked: bool,
     pub jumping: bool,
     pub moving: bool,
-    pub pre_jump: u32,
-    pub post_jump: u32,
+    pub on_floor: bool,
     pub direction: MoveDirection,
 }
 
@@ -34,13 +33,6 @@ impl Controller {
     pub fn reset(&mut self) {
         self.jumping = false;
         self.moving = false;
-
-        if self.pre_jump > 0 {
-            self.pre_jump -= 1;
-        }
-        if self.post_jump > 0 {
-            self.post_jump -= 1;
-        }
     }
 
     pub fn face_left(&mut self) {

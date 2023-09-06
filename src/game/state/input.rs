@@ -1,7 +1,7 @@
 use winit::event::VirtualKeyCode;
 use winit_input_helper::WinitInputHelper as Input;
 
-use crate::component::{Controller, Physics};
+use crate::component::{Controller, CoyoteTime};
 use crate::game::State;
 
 pub struct InputActions {
@@ -12,9 +12,9 @@ pub struct InputActions {
 
 impl State {
     pub fn input(&mut self, input: &mut Input) {
-        let (phys, conn) = self
+        let (conn, yote) = self
             .world
-            .query_one_mut::<(&Physics, &mut Controller)>(self.player)
+            .query_one_mut::<(&mut Controller, &mut CoyoteTime)>(self.player)
             .expect("world.get(player)");
 
         if conn.locked {
@@ -22,13 +22,13 @@ impl State {
         }
 
         if input.key_pressed(self.actions.jump) {
-            if phys.on_floor {
+            if conn.on_floor {
                 conn.jumping = true;
             } else {
-                conn.pre_jump = 5;
+                yote.set_pre_jump();
             }
         }
-        if input.key_held(self.actions.jump) && !phys.on_floor {
+        if input.key_held(self.actions.jump) && !conn.on_floor {
             conn.jumping = true;
         }
 

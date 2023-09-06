@@ -3,11 +3,12 @@ use log::debug;
 
 use winit::event::VirtualKeyCode;
 
-use crate::component::{Collision, Controller, Physics, Player, Spatial};
+use crate::component::{Collision, Controller, CoyoteTime, Physics, Player, Spatial};
 
 use input::InputActions;
 
 pub mod input;
+//pub mod npcs;
 pub mod physics;
 
 /// Game state.
@@ -24,10 +25,18 @@ impl State {
             Player,
             Spatial::new(0, 0),
             Controller::default(),
+            CoyoteTime::default(),
             Physics::new(0, 0),
             Collision::new((0, 0), (10, 14)),
         ));
         debug!("player entity generated ({})", player.id());
+
+        world.spawn((
+            Spatial::new(0, 0),
+            Physics::new(0, 0),
+            Controller::default(),
+            Collision::new((0, 0), (10, 14)),
+        ));
 
         let actions = InputActions {
             jump: VirtualKeyCode::Space,
@@ -40,5 +49,10 @@ impl State {
             player,
             actions,
         }
+    }
+
+    pub fn update(&mut self) {
+        //self.process_npcs();
+        self.process_physics();
     }
 }

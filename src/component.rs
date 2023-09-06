@@ -1,10 +1,12 @@
 pub use collision::Collision;
 pub use controller::Controller;
+pub use coyote::CoyoteTime;
 pub use physics::Physics;
 pub use spatial::Spatial;
 
 pub mod collision;
 pub mod controller;
+pub mod coyote;
 pub mod physics;
 pub mod spatial;
 
