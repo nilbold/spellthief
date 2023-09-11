@@ -1,9 +1,9 @@
 use crate::component::{Collision, Controller, CoyoteTime, Physics, Spatial};
-use crate::game::State;
+use crate::game::{Events, State};
 use crate::math::{collision::BoundingBox, Scaled, Vector};
 
 impl State {
-    pub fn process_physics(&mut self) {
+    pub fn process_physics(&mut self, events: &mut Events) {
         // hardcoding screen half width/height and wall thickness here for testing
         const HWIDTH: i32 = 160;
         const HHEIGHT: i32 = 120;
@@ -28,7 +28,7 @@ impl State {
             }
         }
 
-        for (_id, (pos, phys, conn, coll)) in
+        for (id, (pos, phys, conn, coll)) in
             self.world
                 .query_mut::<(&mut Spatial, &mut Physics, &mut Controller, &Collision)>()
         {
@@ -85,8 +85,15 @@ impl State {
                 if let Some(hit) = bounds.overlap(wall) {
                     *pos = *pos - hit.delta;
                     if hit.normal.y == -Scaled::from(1) {
-                        conn.on_floor = true;
+                        if !conn.on_floor {
+                            events.physics.static_collision(id, hit.normal);
+                            conn.on_floor = true;
+                        }
                         phys.vel.y = Scaled::zero();
+                    }
+                    if hit.normal.x.abs() == Scaled::from(1) {
+                        events.physics.static_collision(id, hit.normal);
+                        phys.vel.x = Scaled::zero();
                     }
                 }
             }

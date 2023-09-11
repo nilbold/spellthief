@@ -4,11 +4,12 @@ use log::debug;
 use winit::event::VirtualKeyCode;
 
 use crate::component::{Collision, Controller, CoyoteTime, Physics, Player, Spatial};
+use crate::game::Events;
 
 use input::InputActions;
 
 pub mod input;
-//pub mod npcs;
+pub mod npc;
 pub mod physics;
 
 /// Game state.
@@ -51,8 +52,10 @@ impl State {
         }
     }
 
-    pub fn update(&mut self) {
-        //self.process_npcs();
-        self.process_physics();
+    pub fn update(&mut self, events: &mut Events) {
+        self.event_npc_static_collision(events.physics.read());
+
+        self.process_npcs(events);
+        self.process_physics(events);
     }
 }

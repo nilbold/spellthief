@@ -16,6 +16,14 @@ impl MoveDirection {
     pub fn is_left(&self) -> bool {
         *self == MoveDirection::Left
     }
+
+    pub fn flip(&self) -> MoveDirection {
+        use MoveDirection::*;
+        match *self {
+            Right => Left,
+            Left => Right,
+        }
+    }
 }
 
 /// Entity Controller, can be Player or AI driven.

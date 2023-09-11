@@ -4,7 +4,7 @@ use anyhow::Result;
 use log::{debug, error};
 use winit::{
     dpi::LogicalSize,
-    event::{Event, WindowEvent},
+    event::{Event as WinitEvent, WindowEvent},
     event_loop::EventLoop,
     window::{Window, WindowBuilder},
 };
@@ -13,9 +13,10 @@ use winit_input_helper::WinitInputHelper as Input;
 use crate::render::Renderer;
 use crate::util::TickRate;
 
+pub use event::Events;
 pub use state::State;
 
-//pub mod events;
+pub mod event;
 pub mod state;
 
 const WIDTH: u32 = 320;
@@ -28,11 +29,12 @@ pub fn main_loop() -> Result<()> {
 
     let mut render = Renderer::new(&window, WIDTH, HEIGHT)?;
     let mut state = State::new();
+    let mut events = Events::new();
 
     let mut tick = TickRate::new(Duration::from_millis(20));
     let mut window_events: Vec<WindowEvent<'static>> = Vec::new();
-    event_loop.run(move |event, _, control_flow| {
-        if let Event::RedrawRequested(_) = event {
+    event_loop.run(move |winit_event, _, control_flow| {
+        if let WinitEvent::RedrawRequested(_) = winit_event {
             if let Err(why) = render.draw_world(&state, tick.lag()) {
                 error!("render.draw failed: {why}");
                 control_flow.set_exit();
@@ -40,15 +42,15 @@ pub fn main_loop() -> Result<()> {
             }
         }
 
-        match event {
-            Event::NewEvents(_) => window_events.clear(),
-            Event::WindowEvent { event, .. } => {
+        match winit_event {
+            WinitEvent::NewEvents(_) => window_events.clear(),
+            WinitEvent::WindowEvent { event, .. } => {
                 if let Some(e) = event.to_static() {
                     window_events.push(e);
                 }
             }
             // we'll execute the rest of the closure once all events are handled
-            Event::MainEventsCleared => (),
+            WinitEvent::MainEventsCleared => (),
             _ => return,
         }
 
@@ -71,7 +73,8 @@ pub fn main_loop() -> Result<()> {
 
         state.input(&mut input);
         while tick.should_update() {
-            state.update();
+            events.update();
+            state.update(&mut events);
         }
 
         window.request_redraw();
