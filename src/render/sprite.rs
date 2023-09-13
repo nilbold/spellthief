@@ -10,7 +10,13 @@ impl Sprite {
 
         assert!((frame as usize) < sprite.frames);
 
-        let min = (pos.0 - sprite.offset.0, pos.1 - sprite.offset.1);
+        let offset = if flip {
+            (sprite.width as i32 - sprite.offset.0, sprite.offset.1)
+        } else {
+            (sprite.offset.0, sprite.offset.1)
+        };
+
+        let min = (pos.0 - offset.0, pos.1 - offset.1);
         let max = (min.0 + sprite.width as i32, min.1 + sprite.height as i32);
 
         let clip = {
