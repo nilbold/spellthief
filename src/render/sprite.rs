@@ -1,17 +1,14 @@
+use crate::component::Sprite;
 use crate::embed;
 use crate::render::Surface;
 
-pub type Frame = u16;
-
-pub enum Sprite {
-    Test(Frame),
-}
-
 impl Sprite {
     pub fn blit(&self, surface: &mut Surface, pos: (i32, i32), flip: bool) {
-        let sprite = match self {
-            Self::Test(_) => embed::SPRITE_TEST,
+        let (sprite, frame) = match self {
+            Self::Test(frame) => (embed::SPRITE_TEST, *frame),
         };
+
+        assert!((frame as usize) < sprite.frames);
 
         let min = (pos.0 - sprite.offset.0, pos.1 - sprite.offset.1);
         let max = (min.0 + sprite.width as i32, min.1 + sprite.height as i32);
@@ -33,12 +30,13 @@ impl Sprite {
         // copy one line at a time to the buffer
         for line in clip.top..sprite.height - clip.bottom {
             let (mut temp_iter1, mut temp_iter2);
+            let fo = frame as usize * sprite.height;
 
             let row_iter: &mut dyn Iterator<Item = _> = if flip {
-                temp_iter1 = sprite.row(line).rev().skip(clip.left).take(sw);
+                temp_iter1 = sprite.row(line + fo).rev().skip(clip.left).take(sw);
                 &mut temp_iter1
             } else {
-                temp_iter2 = sprite.row(line).skip(clip.left).take(sw);
+                temp_iter2 = sprite.row(line + fo).skip(clip.left).take(sw);
                 &mut temp_iter2
             };
 

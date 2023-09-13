@@ -1,9 +1,14 @@
+use std::time::Duration;
+
 use hecs::{Entity, World};
 use log::debug;
 
 use winit::event::VirtualKeyCode;
 
-use crate::component::{Collision, Controller, CoyoteTime, Physics, Player, Spatial};
+use crate::component::animation::AnimationState;
+use crate::component::{
+    Animation, Collision, Controller, CoyoteTime, Physics, Player, Spatial, Sprite,
+};
 use crate::game::Events;
 
 use input::InputActions;
@@ -11,6 +16,7 @@ use input::InputActions;
 pub mod input;
 pub mod npc;
 pub mod physics;
+pub mod sprite;
 
 /// Game state.
 pub struct State {
@@ -29,6 +35,8 @@ impl State {
             CoyoteTime::default(),
             Physics::new(0, 0),
             Collision::new((0, 0), (10, 14)),
+            Sprite::Test(0),
+            Animation::new(AnimationState::Idle),
         ));
         debug!("player entity generated ({})", player.id());
 
@@ -37,6 +45,8 @@ impl State {
             Physics::new(0, 0),
             Controller::default(),
             Collision::new((0, 0), (10, 14)),
+            Sprite::Test(2),
+            Animation::new(AnimationState::Idle),
         ));
 
         let actions = InputActions {
@@ -52,10 +62,11 @@ impl State {
         }
     }
 
-    pub fn update(&mut self, events: &mut Events) {
+    pub fn update(&mut self, tick_rate: Duration, events: &mut Events) {
         self.event_npc_static_collision(events.physics.read());
 
         self.process_npcs(events);
         self.process_physics(events);
+        self.process_sprites(tick_rate);
     }
 }

@@ -74,7 +74,7 @@ pub fn main_loop() -> Result<()> {
         state.input(&mut input);
         while tick.should_update() {
             events.update();
-            state.update(&mut events);
+            state.update(tick.tick_rate(), &mut events);
         }
 
         window.request_redraw();

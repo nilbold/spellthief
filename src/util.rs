@@ -20,6 +20,10 @@ impl TickRate {
         self.lag
     }
 
+    pub fn tick_rate(&self) -> Duration {
+        self.tick_rate
+    }
+
     pub fn step(&mut self) {
         let current = Instant::now();
         let elapsed = current - self.previous;

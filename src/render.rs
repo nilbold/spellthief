@@ -4,10 +4,9 @@ use anyhow::Result;
 use pixels::{Pixels, SurfaceTexture};
 use winit::window::Window;
 
-use crate::component::{Collision, Controller, Spatial};
+use crate::component::{Collision, Controller, Spatial, Sprite};
 use crate::game::State;
 
-pub use sprite::Sprite;
 pub use surface::Surface;
 
 pub mod shapes;
@@ -55,15 +54,16 @@ impl Renderer {
         let mut surface = Surface::new(self.pixels.frame_mut(), self.width, self.height);
         surface.clear([0x20, 0x20, 0x30, 0xff]);
 
-        for (_entity, (pos, conn)) in state
+        for (_entity, (pos, sprite, conn)) in state
             .world
-            .query::<(&Spatial, Option<&Controller>)>()
+            .query::<(&Spatial, &Sprite, Option<&Controller>)>()
             .iter()
         {
             let pos = apply_camera(pos.screen(), self.offset, Some(self.height as i32));
             let flip = conn.map_or(false, |c| c.direction.is_left());
 
-            Sprite::Test(0).blit(&mut surface, pos, flip);
+            sprite.blit(&mut surface, pos, flip);
+            //Sprite::Test(1).blit(&mut surface, pos, flip);
         }
 
         // lets draw collision shapes, for testing
