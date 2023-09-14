@@ -1,14 +1,11 @@
 use crate::component::Sprite;
-use crate::embed;
 use crate::render::Surface;
 
 impl Sprite {
     pub fn blit(&self, surface: &mut Surface, pos: (i32, i32), flip: bool) {
-        let (sprite, frame) = match self {
-            Self::Test(frame) => (embed::SPRITE_TEST, *frame),
-        };
+        let (sprite, frame) = self.data();
 
-        assert!((frame as usize) < sprite.frames);
+        assert!(frame < sprite.frames);
 
         let offset = if flip {
             (sprite.width as i32 - sprite.offset.0, sprite.offset.1)
@@ -31,12 +28,12 @@ impl Sprite {
         let x: usize = (min.0 + clip.left as i32) as usize;
         let y: usize = (min.1 + clip.top as i32) as usize;
         let fw: usize = surface.width as usize;
-        let sw: usize = sprite.width - clip.right;
+        let sw: usize = sprite.width as usize - clip.right;
 
         // copy one line at a time to the buffer
-        for line in clip.top..sprite.height - clip.bottom {
+        for line in clip.top..sprite.height as usize - clip.bottom {
             let (mut temp_iter1, mut temp_iter2);
-            let fo = frame as usize * sprite.height;
+            let fo = frame as usize * sprite.height as usize;
 
             let row_iter: &mut dyn Iterator<Item = _> = if flip {
                 temp_iter1 = sprite.row(line + fo).rev().skip(clip.left).take(sw);

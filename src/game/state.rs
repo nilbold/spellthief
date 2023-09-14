@@ -5,7 +5,6 @@ use log::debug;
 
 use winit::event::VirtualKeyCode;
 
-use crate::component::animation::AnimationState;
 use crate::component::{
     Animation, Collision, Controller, CoyoteTime, Physics, Player, Spatial, Sprite,
 };
@@ -36,7 +35,7 @@ impl State {
             Physics::new(0, 0),
             Collision::new((0, 0), (10, 14)),
             Sprite::Test(0),
-            Animation::new(AnimationState::Idle),
+            Animation::default(),
         ));
         debug!("player entity generated ({})", player.id());
 
@@ -46,7 +45,7 @@ impl State {
             Controller::default(),
             Collision::new((0, 0), (10, 14)),
             Sprite::Test(2),
-            Animation::new(AnimationState::Idle),
+            Animation::default(),
         ));
 
         let actions = InputActions {
