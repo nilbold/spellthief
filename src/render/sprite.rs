@@ -46,8 +46,12 @@ impl Sprite {
             let i = (x + (y + line - clip.top) * fw) * 4;
             for (pixel, c) in surface.buffer[i..i + sw * 4].chunks_mut(4).zip(row_iter) {
                 if c > 0 {
+                    let color = sprite
+                        .palette
+                        .get(c as usize)
+                        .unwrap_or(&[0xff, 0xff, 0xff, 0xff]);
                     // TODO palette, for now every non zero entry is white
-                    pixel.copy_from_slice(&[0xff, 0xff, 0xff, 0xff]);
+                    pixel.copy_from_slice(color);
                 }
             }
         }

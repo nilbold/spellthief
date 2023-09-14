@@ -7,6 +7,7 @@ pub type Frame = u16;
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Sprite {
     Test(Frame),
+    Rat(Frame),
 }
 
 impl Sprite {
@@ -14,6 +15,7 @@ impl Sprite {
     pub fn data(self) -> (&'static EmbeddedSprite<'static>, Frame) {
         match self {
             Self::Test(frame) => (&embed::SPRITE_TEST, frame),
+            Self::Rat(frame) => (&embed::SPRITE_RAT, frame),
         }
     }
 
@@ -28,6 +30,7 @@ impl Sprite {
 
         let sprite = match self {
             Self::Test(_) => Self::Test(frame),
+            Self::Rat(_) => Self::Rat(frame),
         };
 
         (sprite, Duration::from_millis(data.delay(frame) as u64))

@@ -48,6 +48,12 @@ impl State {
             Animation::default(),
         ));
 
+        world.spawn((
+            Spatial::new(-100, -113),
+            Sprite::Rat(0),
+            Animation::default(),
+        ));
+
         let actions = InputActions {
             jump: VirtualKeyCode::Space,
             move_left: VirtualKeyCode::A,
