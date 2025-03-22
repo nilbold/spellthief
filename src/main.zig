@@ -23,27 +23,19 @@ pub fn main() !void {
     });
 
     c.SDL_SetMainReady();
-    if (!c.SDL_SetAppMetadata("spellthief", "0.0.0", "spellthief")) {
-        return error.SdlError;
-    }
+    try err(c.SDL_SetAppMetadata("spellthief", "0.0.0", "spellthief"));
 
-    if (!c.SDL_Init(c.SDL_INIT_VIDEO | c.SDL_INIT_AUDIO | c.SDL_INIT_GAMEPAD)) {
-        return error.SdlError;
-    }
+    try err(c.SDL_Init(c.SDL_INIT_VIDEO | c.SDL_INIT_AUDIO | c.SDL_INIT_GAMEPAD));
     defer c.SDL_Quit();
 
     const window_w = 320 * 4;
     const window_h = 240 * 4;
-    if (!c.SDL_SetHint(c.SDL_HINT_RENDER_VSYNC, "1")) {
-        return error.SdlError;
-    }
+    try err(c.SDL_SetHint(c.SDL_HINT_RENDER_VSYNC, "1"));
 
     const window: *c.SDL_Window, const renderer: *c.SDL_Renderer = wr: {
         var window: ?*c.SDL_Window = null;
         var renderer: ?*c.SDL_Renderer = null;
-        if (!c.SDL_CreateWindowAndRenderer("spellthief", window_w, window_h, 0, &window, &renderer)) {
-            return error.SdlError;
-        }
+        try err(c.SDL_CreateWindowAndRenderer("spellthief", window_w, window_h, 0, &window, &renderer));
 
         break :wr .{ window.?, renderer.? };
     };
@@ -63,16 +55,14 @@ pub fn main() !void {
 
         std.time.sleep(10 * std.time.ns_per_ms);
 
-        if (!c.SDL_SetRenderDrawColor(renderer, 0x11, 0x22, 0x33, 0xff)) {
-            return error.SdlError;
-        }
+        try err(c.SDL_SetRenderDrawColor(renderer, 0x11, 0x22, 0x33, 0xff));
+        try err(c.SDL_RenderClear(renderer));
+        try err(c.SDL_RenderPresent(renderer));
+    }
+}
 
-        if (!c.SDL_RenderClear(renderer)) {
-            return error.SdlError;
-        }
-
-        if (!c.SDL_RenderPresent(renderer)) {
-            return error.SdlError;
-        }
+inline fn err(value: bool) error{SdlError}!void {
+    if (!value) {
+        return error.SdlError;
     }
 }
