@@ -1,0 +1,15 @@
+.{
+    .name = .spellthief,
+    .version = "0.0.0",
+    .minimum_zig_version = "0.14.0",
+    .fingerprint = 0xace1e094cc7a1c45,
+    .dependencies = .{
+        .sdl = .{
+            .url = "git+https://github.com/castholm/SDL.git#dbb1b96360658f5845ff6fac380c4f13d7276dc2",
+            .hash = "sdl-0.2.0+3.2.8-7uIn9FxHfQE325TK7b0qpgt10G3x1xl-3ZMOfTzxUg3C",
+        },
+    },
+    .paths = .{
+        "invalid", // this is not intended for consumption as a package
+    },
+}
