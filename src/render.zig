@@ -1,5 +1,9 @@
+// copyright (c) 2025 nil <nil@kobold.dev>
+// SPDX-License-Identifier: MPL-2.0
+
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const ArrayList = std.ArrayList;
 
 const c = @cImport({
     @cDefine("SDL_DISABLE_OLD_NAMES", {});
@@ -14,7 +18,10 @@ pub const RenderState = struct {
     window: *c.SDL_Window = undefined,
     renderer: *c.SDL_Renderer = undefined,
 
-    pub fn init(_: Allocator, window_w: i32, window_h: i32) !RenderState {
+    // just some rects for testing
+    rects: ArrayList(c.SDL_Rect),
+
+    pub fn init(allocator: Allocator, window_w: i32, window_h: i32) !RenderState {
         c.SDL_SetMainReady();
         try err(c.SDL_SetAppMetadata("spellthief", "0.0.0", "spellthief"));
 
@@ -29,6 +36,7 @@ pub const RenderState = struct {
         return .{
             .window = window.?,
             .renderer = renderer.?,
+            .rects = ArrayList(c.SDL_Rect).init(allocator),
         };
     }
 

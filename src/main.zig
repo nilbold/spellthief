@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 const std = @import("std");
+const builtin = @import("builtin");
 const options = @import("options");
 
 const render = @import("render.zig");
@@ -12,12 +13,22 @@ const c = @cImport({
     @cInclude("SDL3/SDL.h");
 });
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
 
 pub fn main() !void {
     errdefer |err| if (err == error.SdlError) std.log.err("SDL error: {s}", .{c.SDL_GetError()});
 
-    const allocator = gpa.allocator();
+    const allocator, const is_debug = allocator: {
+        break :allocator switch (builtin.mode) {
+            .Debug, .ReleaseSafe => .{ debug_allocator.allocator(), true },
+            .ReleaseFast, .ReleaseSmall => .{ std.heap.smp_allocator, false },
+        };
+    };
+    defer if (is_debug) {
+        if (debug_allocator.deinit() == std.heap.Check.leak) {
+            std.debug.print("memory leak detected\n", .{});
+        }
+    };
 
     std.debug.print("spellthief version {}\n", .{options.version});
     std.debug.print("sdl build version {d}.{d}.{d}\n", .{

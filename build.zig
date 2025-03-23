@@ -16,9 +16,15 @@ pub fn build(b: *std.Build) void {
         }),
     });
 
+    if (target.result.os.tag == .windows and optimize != .Debug) {
+        exe.subsystem = .Windows;
+    }
+
     const sdl_dep = b.dependency("sdl", .{
         .target = target,
-        .optimize = optimize,
+        // lets force SDL into a release mode, the current version has some
+        // issues rith .Debug and causes mouse out of window frame panics
+        .optimize = .ReleaseSmall,
         .preferred_link_mode = .static,
     });
     const sdl_lib = sdl_dep.artifact("SDL3");
