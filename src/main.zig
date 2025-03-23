@@ -4,16 +4,20 @@
 const std = @import("std");
 const options = @import("options");
 
+const render = @import("render.zig");
+const RenderState = render.RenderState;
+
 const c = @cImport({
     @cDefine("SDL_DISABLE_OLD_NAMES", {});
     @cInclude("SDL3/SDL.h");
-    @cInclude("SDL3/SDL_revision.h");
-    @cDefine("SDL_MAIN_HANDLED", {});
-    @cInclude("SDL3/SDL_main.h");
 });
+
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 
 pub fn main() !void {
     errdefer |err| if (err == error.SdlError) std.log.err("SDL error: {s}", .{c.SDL_GetError()});
+
+    const allocator = gpa.allocator();
 
     std.debug.print("spellthief version {}\n", .{options.version});
     std.debug.print("sdl build version {d}.{d}.{d}\n", .{
@@ -22,25 +26,11 @@ pub fn main() !void {
         c.SDL_MICRO_VERSION,
     });
 
-    c.SDL_SetMainReady();
-    try err(c.SDL_SetAppMetadata("spellthief", "0.0.0", "spellthief"));
-
-    try err(c.SDL_Init(c.SDL_INIT_VIDEO | c.SDL_INIT_AUDIO | c.SDL_INIT_GAMEPAD));
-    defer c.SDL_Quit();
-
     const window_w = 320 * 4;
     const window_h = 240 * 4;
-    try err(c.SDL_SetHint(c.SDL_HINT_RENDER_VSYNC, "1"));
 
-    const window: *c.SDL_Window, const renderer: *c.SDL_Renderer = wr: {
-        var window: ?*c.SDL_Window = null;
-        var renderer: ?*c.SDL_Renderer = null;
-        try err(c.SDL_CreateWindowAndRenderer("spellthief", window_w, window_h, 0, &window, &renderer));
-
-        break :wr .{ window.?, renderer.? };
-    };
-    defer c.SDL_DestroyRenderer(renderer);
-    defer c.SDL_DestroyWindow(window);
+    const render_state = try RenderState.init(allocator, window_w, window_h);
+    defer render_state.deinit();
 
     main_loop: while (true) {
         var event: c.SDL_Event = undefined;
@@ -55,9 +45,7 @@ pub fn main() !void {
 
         std.time.sleep(10 * std.time.ns_per_ms);
 
-        try err(c.SDL_SetRenderDrawColor(renderer, 0x11, 0x22, 0x33, 0xff));
-        try err(c.SDL_RenderClear(renderer));
-        try err(c.SDL_RenderPresent(renderer));
+        try render.draw(&render_state);
     }
 }
 
