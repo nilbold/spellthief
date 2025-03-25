@@ -18,10 +18,15 @@ pub const RenderState = struct {
     window: *c.SDL_Window = undefined,
     renderer: *c.SDL_Renderer = undefined,
 
-    // just some rects for testing
-    rects: ArrayList(c.SDL_Rect),
+    window_w: i32,
+    window_h: i32,
 
-    pub fn init(allocator: Allocator, window_w: i32, window_h: i32) !RenderState {
+    scaling: f32,
+
+    // just some rects for testing
+    rects: ArrayList(c.SDL_FRect),
+
+    pub fn init(allocator: Allocator, window_w: i32, window_h: i32, scaling: i32) !RenderState {
         c.SDL_SetMainReady();
         try err(c.SDL_SetAppMetadata("spellthief", "0.0.0", "spellthief"));
 
@@ -31,16 +36,20 @@ pub const RenderState = struct {
 
         var window: ?*c.SDL_Window = null;
         var renderer: ?*c.SDL_Renderer = null;
-        try err(c.SDL_CreateWindowAndRenderer("spellthief", window_w, window_h, 0, &window, &renderer));
+        try err(c.SDL_CreateWindowAndRenderer("spellthief", window_w * scaling, window_h * scaling, 0, &window, &renderer));
 
         return .{
             .window = window.?,
             .renderer = renderer.?,
-            .rects = ArrayList(c.SDL_Rect).init(allocator),
+            .window_w = window_w,
+            .window_h = window_h,
+            .scaling = @floatFromInt(scaling),
+            .rects = ArrayList(c.SDL_FRect).init(allocator),
         };
     }
 
-    pub fn deinit(self: *const RenderState) void {
+    pub fn deinit(self: *RenderState) void {
+        self.rects.clearAndFree();
         c.SDL_DestroyRenderer(self.renderer);
         c.SDL_DestroyWindow(self.window);
         c.SDL_Quit();
@@ -48,14 +57,30 @@ pub const RenderState = struct {
 };
 
 /// clears and renders the current render state to the screen.
-pub fn draw(rs: *const RenderState) !void {
-    try err(c.SDL_SetRenderDrawColor(rs.renderer, 0x11, 0x22, 0x33, 0xff));
+pub fn draw(rs: *RenderState) !void {
+    try err(c.SDL_SetRenderDrawColor(rs.renderer, 0x11, 0x22, 0x33, c.SDL_ALPHA_OPAQUE));
     try err(c.SDL_RenderClear(rs.renderer));
+
+    try err(c.SDL_SetRenderScale(rs.renderer, rs.scaling, rs.scaling));
+    try err(c.SDL_SetRenderDrawColor(rs.renderer, 0xff, 0xff, 0xff, c.SDL_ALPHA_OPAQUE));
+    try err(c.SDL_RenderRects(rs.renderer, rs.rects.items.ptr, @intCast(rs.rects.items.len)));
+
     try err(c.SDL_RenderPresent(rs.renderer));
+
+    rs.rects.clearRetainingCapacity();
+}
+
+pub fn rect(rs: *RenderState, x: i32, y: i32, w: i32, h: i32) !void {
+    const ox, const oy = origin(rs.window_w, rs.window_h, x, y, w, h);
+    try rs.rects.append(c.SDL_FRect{ .x = @floatFromInt(ox), .y = @floatFromInt(oy), .w = @floatFromInt(w), .h = @floatFromInt(h) });
 }
 
 inline fn err(value: bool) error{SdlError}!void {
     if (!value) {
         return error.SdlError;
     }
+}
+
+inline fn origin(window_w: i32, window_h: i32, x: i32, y: i32, w: i32, h: i32) struct { i32, i32 } {
+    return .{ x + @divTrunc(window_w - w, 2), -y + @divTrunc(window_h - h, 2) };
 }

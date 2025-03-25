@@ -37,10 +37,11 @@ pub fn main() !void {
         c.SDL_MICRO_VERSION,
     });
 
-    const window_w = 320 * 4;
-    const window_h = 240 * 4;
+    const window_w = 320;
+    const window_h = 240;
+    const scaling = 3;
 
-    const render_state = try RenderState.init(allocator, window_w, window_h);
+    var render_state = try RenderState.init(allocator, window_w, window_h, scaling);
     defer render_state.deinit();
 
     main_loop: while (true) {
@@ -55,6 +56,12 @@ pub fn main() !void {
         }
 
         std.time.sleep(10 * std.time.ns_per_ms);
+
+        try render.rect(&render_state, 0, 0, 10, 10);
+        try render.rect(&render_state, 20, 20, 10, 10);
+        try render.rect(&render_state, 20, -20, 10, 10);
+        try render.rect(&render_state, -20, -20, 10, 10);
+        try render.rect(&render_state, -20, 20, 10, 10);
 
         try render.draw(&render_state);
     }
