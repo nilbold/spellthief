@@ -10,7 +10,7 @@ const DoublyLinkedList = std.DoublyLinkedList;
 const Entity = @import("entity.zig").Entity;
 const FreeList = DoublyLinkedList(Entity);
 
-/// represents a list of all activity entities
+/// represents a list of all active entities
 pub const Registry = struct {
     data: ArrayList(Entity) = undefined,
     sparse: ArrayList(u32) = undefined,
@@ -27,6 +27,7 @@ pub const Registry = struct {
             .free_arena = ArenaAllocator.init(allocator),
         };
     }
+
     pub fn deinit(reg: *Registry) void {
         reg.free_arena.deinit();
         reg.sparse.deinit();
