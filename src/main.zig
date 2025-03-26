@@ -6,6 +6,7 @@ const builtin = @import("builtin");
 const options = @import("options");
 
 const render = @import("render.zig");
+const entity = @import("entity/entity.zig");
 const RenderState = render.RenderState;
 
 const c = @cImport({
