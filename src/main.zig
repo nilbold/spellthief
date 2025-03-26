@@ -45,6 +45,13 @@ pub fn main() !void {
     var render_state = try RenderState.init(allocator, window_w, window_h, scaling);
     defer render_state.deinit();
 
+    var registry = try entity.Registry.init(allocator);
+    const test_data = entity.TestData.init(allocator);
+
+    const test_entity = try entity.create(&registry, &test_data.impl);
+
+    std.debug.print("{}", .{test_entity});
+
     main_loop: while (true) {
         var event: c.SDL_Event = undefined;
         while (c.SDL_PollEvent(&event)) {
