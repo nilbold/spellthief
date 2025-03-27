@@ -8,58 +8,67 @@ const ArenaAllocator = std.heap.ArenaAllocator;
 const DoublyLinkedList = std.DoublyLinkedList;
 
 const Entity = @import("entity.zig").Entity;
+const PagedArray = @import("../util.zig").PagedArray;
 const FreeList = DoublyLinkedList(Entity);
 
 /// represents a list of all active entities
 pub const Registry = struct {
-    data: ArrayList(Entity) = undefined,
-    sparse: ArrayList(u32) = undefined,
+    dense: ArrayList(Entity),
+    sparse: PagedArray(32, u32),
     free: FreeList = undefined,
     free_arena: ArenaAllocator,
 
+    const Self = @This();
     const invalid = std.math.maxInt(u32);
 
-    pub fn init(allocator: Allocator) !Registry {
+    pub inline fn count(self: *Self) usize {
+        return self.dense.items.len;
+    }
+
+    pub fn init(allocator: Allocator) Self {
         return .{
-            .data = try ArrayList(Entity).initCapacity(allocator, 64),
-            .sparse = try ArrayList(u32).initCapacity(allocator, 64),
+            .dense = ArrayList(Entity).init(allocator),
+            .sparse = PagedArray(32, u32).init(allocator),
             .free = FreeList{},
             .free_arena = ArenaAllocator.init(allocator),
         };
     }
 
-    pub fn deinit(reg: *Registry) void {
-        reg.free_arena.deinit();
-        reg.sparse.deinit();
-        reg.data.deinit();
+    pub fn deinit(self: *Self) void {
+        self.free_arena.deinit();
+        self.sparse.deinit();
+        self.dense.deinit();
     }
 };
 
 pub fn createEntity(reg: *Registry) !Entity {
     var ent: Entity = undefined;
     if (reg.free.len == 0) {
-        ent = .{ .id = @intCast(reg.data.items.len) };
+        ent = .{ .id = @intCast(reg.dense.items.len) };
     } else {
         ent = reg.free.popFirst().?.data;
         ent.gen +%= 1;
     }
 
-    try reg.data.append(ent);
-    try reg.sparse.insert(ent.id, @intCast(reg.data.items.len - 1));
+    try reg.dense.append(ent);
+    try reg.sparse.insert(ent.id, @intCast(reg.dense.items.len - 1));
     return ent;
 }
 
 pub fn destroyEntity(reg: *Registry, ent: Entity) !void {
-    if (reg.data.items.len == 0) {
+    if (reg.dense.items.len == 0) {
         return;
     }
 
-    const index = reg.sparse.items[ent.id];
-    const replace = reg.data.pop().?;
+    const tmp = reg.dense.pop().?;
+    const i = reg.sparse.lookup(ent.id);
+    try reg.sparse.insert(ent.id, Registry.invalid);
 
-    reg.data.items[index] = replace;
-    reg.sparse.items[ent.id] = Registry.invalid;
-    reg.sparse.items[replace.id] = index;
+    // if this is the case, then the item popped was the entry to remove
+    if (i < reg.dense.items.len) {
+        reg.dense.items[i] = tmp;
+        try reg.sparse.insert(tmp.id, i);
+    }
 
     const node = try reg.free_arena.allocator().create(FreeList.Node);
     node.data = ent;

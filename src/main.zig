@@ -45,12 +45,19 @@ pub fn main() !void {
     var render_state = try RenderState.init(allocator, window_w, window_h, scaling);
     defer render_state.deinit();
 
-    var registry = try entity.Registry.init(allocator);
-    const test_data = entity.TestData.init(allocator);
+    var registry = entity.Registry.init(allocator);
+    defer registry.deinit();
 
-    const test_entity = try entity.create(&registry, &test_data.impl);
+    var test_entities = entity.Test.init(allocator, &registry);
+    defer test_entities.deinit();
 
-    std.debug.print("{}", .{test_entity});
+    const ent, const ent_data = try test_entities.create();
+    ent_data.spatial.* = .{ .x = 0, .y = 0 };
+
+    std.debug.print("entities: {}\n", .{registry.count()});
+    std.debug.print("id: {} | {}\n", .{ ent.id, ent_data.spatial.* });
+
+    try test_entities.destroy(ent);
 
     main_loop: while (true) {
         var event: c.SDL_Event = undefined;
