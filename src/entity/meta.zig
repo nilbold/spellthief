@@ -8,8 +8,7 @@ const Allocator = std.mem.Allocator;
 const Entity = @import("entity.zig").Entity;
 const PagedArray = @import("../util.zig").PagedArray;
 
-const registry = @import("registry.zig");
-const Registry = registry.Registry;
+const Registry = @import("registry.zig").Registry;
 
 pub fn EntityDataFields(comptime in: anytype) type {
     var fields: [in.len]std.builtin.Type.StructField = undefined;
@@ -38,7 +37,6 @@ pub fn EntityData(comptime in: anytype) type {
     return struct {
         data: DataFields = undefined,
         dense: ArrayList(u32),
-        sparse: PagedArray(32, u32),
 
         registry: *Registry,
 
@@ -74,8 +72,6 @@ pub fn EntityData(comptime in: anytype) type {
         pub fn init(allocator: Allocator, reg: *Registry) Self {
             var entity_data: EntityData(in) = .{
                 .dense = ArrayList(u32).init(allocator),
-                .sparse = PagedArray(32, u32).init(allocator),
-                //.impl = Interface{ .insertFn = insert },
                 .registry = reg,
             };
             inline for (std.meta.fields(DataFields)) |f| {
@@ -86,7 +82,6 @@ pub fn EntityData(comptime in: anytype) type {
         }
 
         pub fn deinit(self: *Self) void {
-            self.sparse.deinit();
             self.dense.deinit();
             inline for (std.meta.fields(DataFields)) |f| {
                 @field(self.data, f.name).deinit();
@@ -97,12 +92,13 @@ pub fn EntityData(comptime in: anytype) type {
         ///
         /// the accessor can become invalid after additional calls to create
         pub fn create(self: *Self) !struct { Entity, Accessor } {
-            const ent = try registry.createEntity(self.registry);
+            const ent = try self.registry.createEntity();
             const i: u32 = @intCast(self.dense.items.len);
-            var acsr: Accessor = undefined;
 
             try self.dense.append(i);
-            try self.sparse.insert(ent.id, i);
+            try self.registry.data.insert(ent.id, i);
+
+            var acsr: Accessor = undefined;
 
             inline for (std.meta.fields(DataFields)) |f| {
                 try @field(self.data, f.name).append(undefined);
@@ -114,14 +110,16 @@ pub fn EntityData(comptime in: anytype) type {
 
         /// destroys an entity and its associated data
         pub fn destroy(self: *Self, ent: Entity) !void {
-            try registry.destroyEntity(self.registry, ent);
+            // TODO
+            // we should map entity to type to prevent destroying the wrong
+            // entity through the wrong type
 
+            const i = (try self.registry.destroyEntity(ent)).?;
             const tmp = self.dense.pop().?;
-            const i = self.sparse.lookup(ent.id);
 
             if (i < self.dense.items.len) {
                 self.dense.items[i] = tmp;
-                try self.sparse.insert(tmp, i);
+                try self.registry.data.insert(tmp, i);
             }
 
             inline for (std.meta.fields(DataFields)) |f| {

@@ -3,3 +3,6 @@
 
 /// 2d coordinates
 pub const Spatial = struct { x: i32, y: i32 };
+
+/// 2d physics force
+pub const Physics = struct { vx: i32, vy: i32 };

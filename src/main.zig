@@ -48,16 +48,24 @@ pub fn main() !void {
     var registry = entity.Registry.init(allocator);
     defer registry.deinit();
 
-    var test_entities = entity.Test.init(allocator, &registry);
-    defer test_entities.deinit();
+    var static = entity.TestStatic.init(allocator, &registry);
+    var moving = entity.TestMoving.init(allocator, &registry);
+    defer static.deinit();
+    defer moving.deinit();
 
-    const ent, const ent_data = try test_entities.create();
-    ent_data.spatial.* = .{ .x = 0, .y = 0 };
+    const ent_static, const ent_static_data = try static.create();
+    ent_static_data.spatial.* = .{ .x = 0, .y = 0 };
+
+    const ent_moving, const ent_moving_data = try moving.create();
+    ent_moving_data.spatial.* = .{ .x = 0, .y = 0 };
+    ent_moving_data.physics.* = .{ .vx = 1, .vy = 1 };
 
     std.debug.print("entities: {}\n", .{registry.count()});
-    std.debug.print("id: {} | {}\n", .{ ent.id, ent_data.spatial.* });
+    std.debug.print("id: {} | {}\n", .{ ent_static.id, ent_static_data.spatial.* });
+    std.debug.print("id: {} | {} {}\n", .{ ent_moving.id, ent_moving_data.spatial.*, ent_moving_data.physics.* });
 
-    try test_entities.destroy(ent);
+    try static.destroy(ent_static);
+    try moving.destroy(ent_moving);
 
     main_loop: while (true) {
         var event: c.SDL_Event = undefined;

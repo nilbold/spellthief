@@ -66,7 +66,7 @@ pub fn PagedArray(comptime page_size: comptime_int, comptime T: type) type {
         }
 
         /// remove item at index i
-        pub fn remove(self: *Self, i: usize) void {
+        pub fn remove(self: *Self, i: usize) ?T {
             const page_n = i / page_size;
             const page_i = i % page_size;
             const allocator = self.data.allocator;
@@ -76,9 +76,10 @@ pub fn PagedArray(comptime page_size: comptime_int, comptime T: type) type {
             const array = page_data.*.?.page;
 
             if (array[page_i] == null) {
-                return;
+                return null;
             }
 
+            const ret = array[page_i];
             array[page_i] = null;
             page_data.*.?.len -= 1;
 
@@ -88,6 +89,8 @@ pub fn PagedArray(comptime page_size: comptime_int, comptime T: type) type {
                 allocator.destroy(page_data.*.?.page);
                 page_data.* = null;
             }
+
+            return ret;
         }
     };
 }
