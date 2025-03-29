@@ -53,19 +53,26 @@ pub fn main() !void {
     defer static.deinit();
     defer moving.deinit();
 
-    const ent_static, const ent_static_data = try static.create();
-    ent_static_data.spatial.* = .{ .x = 0, .y = 0 };
+    {
+        var ent_data: [5]entity.TestStatic.Accessor = undefined;
+        for (&ent_data) |*data| {
+            _, data.* = try static.create();
+        }
 
-    const ent_moving, const ent_moving_data = try moving.create();
-    ent_moving_data.spatial.* = .{ .x = 0, .y = 0 };
-    ent_moving_data.physics.* = .{ .vx = 1, .vy = 1 };
+        // zig fmt: off
+        ent_data[0].spatial.* = .{ .x =   0, .y =   0 };
+        ent_data[1].spatial.* = .{ .x =  20, .y =  20 };
+        ent_data[2].spatial.* = .{ .x =  20, .y = -20 };
+        ent_data[3].spatial.* = .{ .x = -20, .y = -20 };
+        ent_data[4].spatial.* = .{ .x = -20, .y =  20 };
+        // zig fmt: on
+    }
 
-    std.debug.print("entities: {}\n", .{registry.count()});
-    std.debug.print("id: {} | {}\n", .{ ent_static.id, ent_static_data.spatial.* });
-    std.debug.print("id: {} | {} {}\n", .{ ent_moving.id, ent_moving_data.spatial.*, ent_moving_data.physics.* });
-
-    try static.destroy(ent_static);
-    try moving.destroy(ent_moving);
+    {
+        _, const ent_data = try moving.create();
+        ent_data.spatial.* = .{ .x = 0, .y = 0 };
+        ent_data.physics.* = .{ .vx = 1, .vy = 1 };
+    }
 
     main_loop: while (true) {
         var event: c.SDL_Event = undefined;
@@ -80,11 +87,10 @@ pub fn main() !void {
 
         std.time.sleep(10 * std.time.ns_per_ms);
 
-        try render.rect(&render_state, 0, 0, 10, 10);
-        try render.rect(&render_state, 20, 20, 10, 10);
-        try render.rect(&render_state, 20, -20, 10, 10);
-        try render.rect(&render_state, -20, -20, 10, 10);
-        try render.rect(&render_state, -20, 20, 10, 10);
+        for (0..static.dense.items.len) |i| {
+            const spatial = &static.data.spatial.items[i];
+            try render.rect(&render_state, spatial.x, spatial.y, 10, 10);
+        }
 
         try render.draw(&render_state);
     }

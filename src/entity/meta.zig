@@ -43,7 +43,7 @@ pub fn EntityData(comptime in: anytype) type {
         const Self = @This();
         const DataFields = EntityDataFields(in);
 
-        const Accessor = acsr: {
+        pub const Accessor = acsr: {
             var fields: [in.len]std.builtin.Type.StructField = undefined;
             for (in, 0..) |t, i| {
                 const field_name: [:0]const u8 = t[0][0..];
