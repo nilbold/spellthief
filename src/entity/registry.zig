@@ -2,20 +2,15 @@
 // SPDX-License-Identifier: MPL-2.0
 
 const std = @import("std");
-const ArrayList = std.ArrayList;
-const Allocator = std.mem.Allocator;
-const ArenaAllocator = std.heap.ArenaAllocator;
-const DoublyLinkedList = std.DoublyLinkedList;
 
 const Entity = @import("entity.zig").Entity;
+
 const PagedArray = @import("../util.zig").PagedArray;
-const FreeList = DoublyLinkedList(Entity);
+const FreeList = std.DoublyLinkedList(Entity);
 
 /// represents a list of all active entities
 pub const Registry = struct {
-    /// the dense portion of the sparse to dense sparse set
-    dense: ArrayList(Entity),
-    /// the sparse portion of the sparse to dense sparse set
+    dense: std.ArrayList(Entity),
     sparse: PagedArray(page_size, u32),
     /// contains data indices for each entity
     ///
@@ -23,33 +18,50 @@ pub const Registry = struct {
     data: PagedArray(page_size, u32),
     /// a list of entity ids to be recycled
     free: FreeList = undefined,
-    free_arena: ArenaAllocator,
+    free_arena: std.heap.ArenaAllocator,
 
-    const Self = @This();
     const page_size = 256;
 
-    pub inline fn count(self: *Self) usize {
+    pub inline fn count(self: *Registry) usize {
         return self.dense.items.len;
     }
 
-    pub fn init(allocator: Allocator) Self {
+    /// lookup the full entity value, including generation data
+    pub inline fn entity_lookup(self: *Registry, ent_id: u32) ?Entity {
+        const i = self.sparse.lookup(ent_id);
+        if (i >= self.dense.items.len) {
+            return null;
+        }
+
+        return self.dense.items[i];
+    }
+
+    pub inline fn data_lookup(self: *Registry, ent: Entity) ?u32 {
+        return self.data.lookup(ent);
+    }
+
+    pub inline fn insert(self: *Registry, ent_id: u32, data_index: u32) !void {
+        try self.data.insert(ent_id, data_index);
+    }
+
+    pub fn init(allocator: std.mem.Allocator) Registry {
         return .{
-            .dense = ArrayList(Entity).init(allocator),
+            .dense = std.ArrayList(Entity).init(allocator),
             .sparse = PagedArray(page_size, u32).init(allocator),
             .data = PagedArray(page_size, u32).init(allocator),
             .free = FreeList{},
-            .free_arena = ArenaAllocator.init(allocator),
+            .free_arena = std.heap.ArenaAllocator.init(allocator),
         };
     }
 
-    pub fn deinit(self: *Self) void {
+    pub fn deinit(self: *Registry) void {
         self.free_arena.deinit();
         self.data.deinit();
         self.sparse.deinit();
         self.dense.deinit();
     }
 
-    pub fn createEntity(self: *Self) !Entity {
+    pub fn createEntity(self: *Registry) !Entity {
         var ent: Entity = undefined;
         if (self.free.len == 0) {
             ent = .{ .id = @intCast(self.dense.items.len) };
@@ -64,7 +76,7 @@ pub const Registry = struct {
     }
 
     /// destroys an entity, returning its data index for additional cleanup
-    pub fn destroyEntity(self: *Self, ent: Entity) !?u32 {
+    pub fn destroyEntity(self: *Registry, ent: Entity) !?u32 {
         if (self.dense.items.len == 0) {
             return null;
         }

@@ -42,37 +42,30 @@ pub fn main() !void {
     const window_h = 240;
     const scaling = 3;
 
+    const window_half_w = window_w / 2;
+    const window_half_h = window_h / 2;
+
     var render_state = try RenderState.init(allocator, window_w, window_h, scaling);
     defer render_state.deinit();
 
     var registry = entity.Registry.init(allocator);
     defer registry.deinit();
 
-    var static = entity.TestStatic.init(allocator, &registry);
-    var moving = entity.TestMoving.init(allocator, &registry);
+    var static = try entity.TestStatic.init(allocator, &registry);
     defer static.deinit();
+
+    var moving = try entity.TestMoving.init(allocator, &registry);
     defer moving.deinit();
 
-    {
-        var ent_data: [5]entity.TestStatic.Accessor = undefined;
-        for (&ent_data) |*data| {
-            _, data.* = try static.create();
-        }
+    // zig fmt: off
+    _ = try static.create(.{ .x =   0, .y =   0 });
+    _ = try static.create(.{ .x =  20, .y =  20 });
+    _ = try static.create(.{ .x =  20, .y = -20 });
+    _ = try static.create(.{ .x = -20, .y = -20 });
+    _ = try static.create(.{ .x = -20, .y =  20 });
 
-        // zig fmt: off
-        ent_data[0].spatial.* = .{ .x =   0, .y =   0 };
-        ent_data[1].spatial.* = .{ .x =  20, .y =  20 };
-        ent_data[2].spatial.* = .{ .x =  20, .y = -20 };
-        ent_data[3].spatial.* = .{ .x = -20, .y = -20 };
-        ent_data[4].spatial.* = .{ .x = -20, .y =  20 };
-        // zig fmt: on
-    }
-
-    {
-        _, const ent_data = try moving.create();
-        ent_data.spatial.* = .{ .x = 0, .y = 0 };
-        ent_data.physics.* = .{ .vx = 1, .vy = 1 };
-    }
+    _ = try moving.create(.{ .x = 0, .y = 0, .vx = 1, .vy = 1});
+    // zig fmt: on
 
     main_loop: while (true) {
         var event: c.SDL_Event = undefined;
@@ -85,11 +78,49 @@ pub fn main() !void {
             }
         }
 
+        {
+            var iter = moving.slice();
+            while (iter.next()) |_| {
+                var data = iter.get();
+                data.x += data.vx;
+                data.y += data.vy;
+
+                if (data.x >= window_half_w) {
+                    data.x = window_half_w;
+                    data.vx = -data.vx;
+                } else if (data.x <= -window_half_w) {
+                    data.x = -window_half_w;
+                    data.vx = -data.vx;
+                }
+
+                if (data.y >= window_half_h) {
+                    data.y = window_half_h;
+                    data.vy = -data.vy;
+                } else if (data.y <= -window_half_h) {
+                    data.y = -window_half_h;
+                    data.vy = -data.vy;
+                }
+
+                iter.set(data);
+            }
+        }
+
         std.time.sleep(10 * std.time.ns_per_ms);
 
-        for (0..static.dense.items.len) |i| {
-            const spatial = &static.data.spatial.items[i];
-            try render.rect(&render_state, spatial.x, spatial.y, 10, 10);
+        {
+            var iter = static.slice();
+            while (iter.next()) |_| {
+                const data = iter.get();
+                try render.rect(&render_state, data.x, data.y, 10, 10);
+            }
+        }
+
+        {
+            var iter = moving.slice();
+            while (iter.next()) |_| {
+                const data = iter.get();
+                try render.rect(&render_state, data.x, data.y, 10, 10);
+            }
         }
 
         try render.draw(&render_state);
