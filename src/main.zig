@@ -9,6 +9,9 @@ const render = @import("render.zig");
 const entity = @import("entity/entity.zig");
 const RenderState = render.RenderState;
 
+const World = @import("world.zig").World;
+const Sector = @import("world.zig").Sector;
+
 const c = @cImport({
     @cDefine("SDL_DISABLE_OLD_NAMES", {});
     @cInclude("SDL3/SDL.h");
@@ -42,8 +45,8 @@ pub fn main() !void {
     const window_h = 240;
     const scaling = 3;
 
-    const window_half_w = window_w / 2;
-    const window_half_h = window_h / 2;
+    //const window_half_w = window_w / 2;
+    //const window_half_h = window_h / 2;
 
     var render_state = try RenderState.init(allocator, window_w, window_h, scaling);
     defer render_state.deinit();
@@ -57,15 +60,19 @@ pub fn main() !void {
     var moving = try entity.TestMoving.init(allocator, &registry);
     defer moving.deinit();
 
-    // zig fmt: off
-    _ = try static.create(.{ .x =   0, .y =   0 });
-    _ = try static.create(.{ .x =  20, .y =  20 });
-    _ = try static.create(.{ .x =  20, .y = -20 });
-    _ = try static.create(.{ .x = -20, .y = -20 });
-    _ = try static.create(.{ .x = -20, .y =  20 });
+    var world = World.init();
 
-    _ = try moving.create(.{ .x = 0, .y = 0, .vx = 1, .vy = 1});
-    // zig fmt: on
+    const s0 = try world.sectors.addOne();
+    s0.id = 0;
+    try s0.portals.append(Sector.Portal{ .s = 1, .p = 0, .x = 50, .y = 0 });
+    s0.rel = .{ 0, 0 };
+
+    world.current = s0.id;
+
+    const s1 = try world.sectors.addOne();
+    s1.id = 1;
+    try s1.portals.append(Sector.Portal{ .s = 0, .p = 0, .x = -50, .y = 0 });
+    s1.rel = world.relative(0);
 
     main_loop: while (true) {
         var event: c.SDL_Event = undefined;
@@ -78,49 +85,10 @@ pub fn main() !void {
             }
         }
 
-        {
-            var iter = moving.slice();
-            while (iter.next()) |_| {
-                var data = iter.get();
-                data.x += data.vx;
-                data.y += data.vy;
-
-                if (data.x >= window_half_w) {
-                    data.x = window_half_w;
-                    data.vx = -data.vx;
-                } else if (data.x <= -window_half_w) {
-                    data.x = -window_half_w;
-                    data.vx = -data.vx;
-                }
-
-                if (data.y >= window_half_h) {
-                    data.y = window_half_h;
-                    data.vy = -data.vy;
-                } else if (data.y <= -window_half_h) {
-                    data.y = -window_half_h;
-                    data.vy = -data.vy;
-                }
-
-                iter.set(data);
-            }
-        }
-
         std.time.sleep(10 * std.time.ns_per_ms);
 
-        {
-            var iter = static.slice();
-            while (iter.next()) |_| {
-                const data = iter.get();
-                try render.rect(&render_state, data.x, data.y, 10, 10);
-            }
-        }
-
-        {
-            var iter = moving.slice();
-            while (iter.next()) |_| {
-                const data = iter.get();
-                try render.rect(&render_state, data.x, data.y, 10, 10);
-            }
+        for (world.sectors.slice()) |s| {
+            try render.rect(&render_state, s.rel[0], s.rel[1], 20, 20);
         }
 
         try render.draw(&render_state);
