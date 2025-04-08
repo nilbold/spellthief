@@ -12,6 +12,8 @@ const RenderState = render.RenderState;
 const World = @import("world.zig").World;
 const Sector = @import("world.zig").Sector;
 
+const game = @import("game.zig");
+
 const c = @cImport({
     @cDefine("SDL_DISABLE_OLD_NAMES", {});
     @cInclude("SDL3/SDL.h");
@@ -74,6 +76,8 @@ pub fn main() !void {
     try s1.portals.append(Sector.Portal{ .s = 0, .p = 0, .x = -50, .y = 0 });
     s1.rel = world.relative(0);
 
+    try game.init();
+
     main_loop: while (true) {
         var event: c.SDL_Event = undefined;
         while (c.SDL_PollEvent(&event)) {
@@ -87,11 +91,8 @@ pub fn main() !void {
 
         std.time.sleep(10 * std.time.ns_per_ms);
 
-        for (world.sectors.slice()) |s| {
-            try render.rect(&render_state, s.rel[0], s.rel[1], 20, 20);
-        }
-
-        try render.draw(&render_state);
+        game.update(&world);
+        try game.render(&render_state, &world);
     }
 }
 
