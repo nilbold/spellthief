@@ -14,47 +14,46 @@ const c = @cImport({
 
 /// RenderState provides SDL initialization and manages the underlaying window
 /// and renderer.
-pub const RenderState = struct {
-    window: *c.SDL_Window = undefined,
-    renderer: *c.SDL_Renderer = undefined,
+const RenderState = @This();
 
-    window_w: i32,
-    window_h: i32,
+window: *c.SDL_Window = undefined,
+renderer: *c.SDL_Renderer = undefined,
 
-    scaling: f32,
+window_w: i32,
+window_h: i32,
+scaling: f32,
 
-    // just some rects for testing
-    rects: ArrayList(c.SDL_FRect),
+// just some rects for testing
+rects: ArrayList(c.SDL_FRect),
 
-    pub fn init(allocator: Allocator, window_w: i32, window_h: i32, scaling: i32) !RenderState {
-        c.SDL_SetMainReady();
-        try err(c.SDL_SetAppMetadata("spellthief", "0.0.0", "spellthief"));
+pub fn init(allocator: Allocator, window_w: i32, window_h: i32, scaling: i32) !RenderState {
+    c.SDL_SetMainReady();
+    try err(c.SDL_SetAppMetadata("spellthief", "0.0.0", "spellthief"));
 
-        try err(c.SDL_Init(c.SDL_INIT_VIDEO | c.SDL_INIT_AUDIO | c.SDL_INIT_GAMEPAD));
+    try err(c.SDL_Init(c.SDL_INIT_VIDEO | c.SDL_INIT_AUDIO | c.SDL_INIT_GAMEPAD));
 
-        try err(c.SDL_SetHint(c.SDL_HINT_RENDER_VSYNC, "1"));
+    try err(c.SDL_SetHint(c.SDL_HINT_RENDER_VSYNC, "1"));
 
-        var window: ?*c.SDL_Window = null;
-        var renderer: ?*c.SDL_Renderer = null;
-        try err(c.SDL_CreateWindowAndRenderer("spellthief", window_w * scaling, window_h * scaling, 0, &window, &renderer));
+    var window: ?*c.SDL_Window = null;
+    var renderer: ?*c.SDL_Renderer = null;
+    try err(c.SDL_CreateWindowAndRenderer("spellthief", window_w * scaling, window_h * scaling, 0, &window, &renderer));
 
-        return .{
-            .window = window.?,
-            .renderer = renderer.?,
-            .window_w = window_w,
-            .window_h = window_h,
-            .scaling = @floatFromInt(scaling),
-            .rects = ArrayList(c.SDL_FRect).init(allocator),
-        };
-    }
+    return .{
+        .window = window.?,
+        .renderer = renderer.?,
+        .window_w = window_w,
+        .window_h = window_h,
+        .scaling = @floatFromInt(scaling),
+        .rects = ArrayList(c.SDL_FRect).init(allocator),
+    };
+}
 
-    pub fn deinit(self: *RenderState) void {
-        self.rects.clearAndFree();
-        c.SDL_DestroyRenderer(self.renderer);
-        c.SDL_DestroyWindow(self.window);
-        c.SDL_Quit();
-    }
-};
+pub fn deinit(self: *RenderState) void {
+    self.rects.clearAndFree();
+    c.SDL_DestroyRenderer(self.renderer);
+    c.SDL_DestroyWindow(self.window);
+    c.SDL_Quit();
+}
 
 /// clears and renders the current render state to the screen.
 pub fn draw(rs: *RenderState) !void {

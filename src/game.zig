@@ -2,32 +2,70 @@
 // SPDX-License-Identifier: MPL-2.0
 
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 
-const render_ = @import("render.zig");
-const RenderState = render_.RenderState;
+const RenderState = @import("render/mod.zig").RenderState;
 const World = @import("world.zig").World;
+const Sector = @import("world.zig").Sector;
 
-var ticks: Ticks = Ticks{};
+ticks: Ticks,
+rs: RenderState,
+world: World,
 
-pub fn init() !void {
+const Game = @This();
+
+pub fn init(allocator: Allocator, opt: GameOptions) !Game {
+    const rs = try RenderState.init(allocator, opt.width, opt.height, opt.scale);
+
+    var world = World.init();
+
+    const s0 = try world.sectors.addOne();
+    s0.id = 0;
+    try s0.portals.append(Sector.Portal{ .s = 1, .p = 0, .x = 50, .y = 0 });
+    s0.rel = .{ 0, 0 };
+
+    world.current = s0.id;
+
+    const s1 = try world.sectors.addOne();
+    s1.id = 1;
+    try s1.portals.append(Sector.Portal{ .s = 0, .p = 0, .x = -50, .y = 0 });
+    s1.rel = world.relative(0);
+
+    var ticks = Ticks{};
     try ticks.init();
+
+    return .{
+        .ticks = ticks,
+        .rs = rs,
+        .world = world,
+    };
 }
 
-pub fn update(_: *World) void {
-    ticks.accumulate();
+pub fn deinit(self: *Game) void {
+    self.rs.deinit();
+}
 
-    while (ticks.consume()) {
+pub fn update(self: *Game) void {
+    self.ticks.accumulate();
+
+    while (self.ticks.consume()) {
         // update tick
     }
 }
 
-pub fn render(render_state: *RenderState, world: *World) !void {
-    for (world.sectors.slice()) |s| {
-        try render_.rect(render_state, s.rel[0], s.rel[1], 20, 20);
+pub fn render(self: *Game) !void {
+    for (self.world.sectors.slice()) |s| {
+        try self.rs.rect(s.rel[0], s.rel[1], 20, 20);
     }
 
-    try render_.draw(render_state);
+    try self.rs.draw();
 }
+
+const GameOptions = struct {
+    width: i32,
+    height: i32,
+    scale: i32 = 1,
+};
 
 const Ticks = struct {
     const tickrate = 48;

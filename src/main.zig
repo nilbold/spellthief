@@ -5,14 +5,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const options = @import("options");
 
-const render = @import("render.zig");
-const entity = @import("entity/entity.zig");
-const RenderState = render.RenderState;
-
-const World = @import("world.zig").World;
-const Sector = @import("world.zig").Sector;
-
-const game = @import("game.zig");
+const Game = @import("Game.zig");
 
 const c = @cImport({
     @cDefine("SDL_DISABLE_OLD_NAMES", {});
@@ -43,40 +36,12 @@ pub fn main() !void {
         c.SDL_MICRO_VERSION,
     });
 
-    const window_w = 320;
-    const window_h = 240;
-    const scaling = 3;
-
-    //const window_half_w = window_w / 2;
-    //const window_half_h = window_h / 2;
-
-    var render_state = try RenderState.init(allocator, window_w, window_h, scaling);
-    defer render_state.deinit();
-
-    var registry = entity.Registry.init(allocator);
-    defer registry.deinit();
-
-    var static = try entity.TestStatic.init(allocator, &registry);
-    defer static.deinit();
-
-    var moving = try entity.TestMoving.init(allocator, &registry);
-    defer moving.deinit();
-
-    var world = World.init();
-
-    const s0 = try world.sectors.addOne();
-    s0.id = 0;
-    try s0.portals.append(Sector.Portal{ .s = 1, .p = 0, .x = 50, .y = 0 });
-    s0.rel = .{ 0, 0 };
-
-    world.current = s0.id;
-
-    const s1 = try world.sectors.addOne();
-    s1.id = 1;
-    try s1.portals.append(Sector.Portal{ .s = 0, .p = 0, .x = -50, .y = 0 });
-    s1.rel = world.relative(0);
-
-    try game.init();
+    var game = try Game.init(allocator, .{
+        .width = 320,
+        .height = 240,
+        .scale = 3,
+    });
+    defer game.deinit();
 
     main_loop: while (true) {
         var event: c.SDL_Event = undefined;
@@ -91,8 +56,8 @@ pub fn main() !void {
 
         std.time.sleep(10 * std.time.ns_per_ms);
 
-        game.update(&world);
-        try game.render(&render_state, &world);
+        game.update();
+        try game.render();
     }
 }
 
