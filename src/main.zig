@@ -54,10 +54,10 @@ pub fn main() !void {
             }
         }
 
-        std.time.sleep(10 * std.time.ns_per_ms);
-
         game.update();
         try game.render();
+
+        std.time.sleep(std.time.ns_per_ms);
     }
 }
 

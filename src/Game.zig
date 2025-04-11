@@ -1,10 +1,13 @@
 // copyright (c) 2025 nil <nil@kobold.dev>
 // SPDX-License-Identifier: MPL-2.0
 
+const Game = @This();
+
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
 const RenderState = @import("render/mod.zig").RenderState;
+const Pool = @import("entity/mod.zig").Pool;
 const World = @import("world.zig").World;
 const Sector = @import("world.zig").Sector;
 
@@ -12,7 +15,9 @@ ticks: Ticks,
 rs: RenderState,
 world: World,
 
-const Game = @This();
+entities: EntityPool,
+
+const EntityPool = Pool(struct { x: i32, y: i32 });
 
 pub fn init(allocator: Allocator, opt: GameOptions) !Game {
     const rs = try RenderState.init(allocator, opt.width, opt.height, opt.scale);
@@ -34,14 +39,21 @@ pub fn init(allocator: Allocator, opt: GameOptions) !Game {
     var ticks = Ticks{};
     try ticks.init();
 
+    // just for a quick sanity test
+    var entities = try EntityPool.init(allocator);
+    _ = try entities.create(.{ .x = -20, .y = 20 });
+    _ = try entities.create(.{ .x = 20, .y = 20 });
+
     return .{
         .ticks = ticks,
         .rs = rs,
         .world = world,
+        .entities = entities,
     };
 }
 
 pub fn deinit(self: *Game) void {
+    self.entities.deinit();
     self.rs.deinit();
 }
 
