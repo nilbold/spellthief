@@ -70,6 +70,12 @@ pub fn render(self: *Game) !void {
         try self.rs.rect(s.rel[0], s.rel[1], 20, 20);
     }
 
+    var ent_iter = self.entities.iter();
+    while (ent_iter.next()) |ent| {
+        const ent_data = self.entities.storage.get(ent.id);
+        try self.rs.rect(ent_data.x, ent_data.y, 10, 10);
+    }
+
     try self.rs.draw();
 }
 

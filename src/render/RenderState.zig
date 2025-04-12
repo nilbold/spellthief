@@ -1,9 +1,14 @@
 // copyright (c) 2025 nil <nil@kobold.dev>
 // SPDX-License-Identifier: MPL-2.0
 
+//! RenderState provides SDL initialization and manages the underlaying window
+//! and renderer.
+
+const RenderState = @This();
+
 const std = @import("std");
+
 const Allocator = std.mem.Allocator;
-const ArrayList = std.ArrayList;
 
 const c = @cImport({
     @cDefine("SDL_DISABLE_OLD_NAMES", {});
@@ -11,10 +16,6 @@ const c = @cImport({
     @cDefine("SDL_MAIN_HANDLED", {});
     @cInclude("SDL3/SDL_main.h");
 });
-
-/// RenderState provides SDL initialization and manages the underlaying window
-/// and renderer.
-const RenderState = @This();
 
 window: *c.SDL_Window = undefined,
 renderer: *c.SDL_Renderer = undefined,
@@ -24,7 +25,7 @@ window_h: i32,
 scaling: f32,
 
 // just some rects for testing
-rects: ArrayList(c.SDL_FRect),
+rects: std.ArrayList(c.SDL_FRect),
 
 pub fn init(allocator: Allocator, window_w: i32, window_h: i32, scaling: i32) !RenderState {
     c.SDL_SetMainReady();
@@ -44,7 +45,7 @@ pub fn init(allocator: Allocator, window_w: i32, window_h: i32, scaling: i32) !R
         .window_w = window_w,
         .window_h = window_h,
         .scaling = @floatFromInt(scaling),
-        .rects = ArrayList(c.SDL_FRect).init(allocator),
+        .rects = std.ArrayList(c.SDL_FRect).init(allocator),
     };
 }
 
@@ -71,7 +72,12 @@ pub fn draw(rs: *RenderState) !void {
 
 pub fn rect(rs: *RenderState, x: i32, y: i32, w: i32, h: i32) !void {
     const ox, const oy = origin(rs.window_w, rs.window_h, x, y, w, h);
-    try rs.rects.append(c.SDL_FRect{ .x = @floatFromInt(ox), .y = @floatFromInt(oy), .w = @floatFromInt(w), .h = @floatFromInt(h) });
+    try rs.rects.append(c.SDL_FRect{
+        .x = @floatFromInt(ox),
+        .y = @floatFromInt(oy),
+        .w = @floatFromInt(w),
+        .h = @floatFromInt(h),
+    });
 }
 
 inline fn err(value: bool) error{SdlError}!void {

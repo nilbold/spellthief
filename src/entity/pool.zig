@@ -18,12 +18,6 @@ pub fn Pool(comptime T: type) type {
         const Storage = std.MultiArrayList(T);
         const Generation = std.ArrayList(u16);
 
-        const Entity = packed struct(u32) {
-            const Resource = T;
-            gen: u16 = 0,
-            id: u16,
-        };
-
         allocator: Allocator,
         count: u16 = 0,
         storage: Storage = .{},
@@ -43,6 +37,12 @@ pub fn Pool(comptime T: type) type {
             self.generation.deinit();
             self.storage.deinit(self.allocator);
         }
+
+        pub const Entity = packed struct(u32) {
+            const Resource = T;
+            gen: u16 = 0,
+            id: u16,
+        };
 
         pub fn create(self: *Self, data: T) !Entity {
             const cap = self.alive.capacity();
@@ -80,6 +80,25 @@ pub fn Pool(comptime T: type) type {
             self.generation.items[ent.id] +%= 1;
             self.alive.unset(ent.id);
             self.count -= 1;
+        }
+
+        pub const Iterator = struct {
+            iter: std.DynamicBitSet.Iterator(.{ .kind = .set }),
+            gen: *Generation,
+
+            pub fn next(self: *Iterator) ?Entity {
+                if (self.iter.next()) |id| {
+                    return Entity{ .id = @intCast(id), .gen = self.gen.items[id] };
+                }
+                return null;
+            }
+        };
+
+        pub fn iter(self: *Self) Iterator {
+            return .{
+                .iter = self.alive.iterator(.{ .kind = .set }),
+                .gen = &self.generation,
+            };
         }
 
         pub fn valid(self: *Self, ent: Entity) bool {
