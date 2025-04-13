@@ -6,14 +6,17 @@ const Game = @This();
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const RenderState = @import("render/mod.zig").RenderState;
-const Pool = @import("entity/mod.zig").Pool;
-const World = @import("world.zig").World;
-const Sector = @import("world.zig").Sector;
+const RenderState = @import("../render/mod.zig").RenderState;
+const Pool = @import("../entity/mod.zig").Pool;
+const World = @import("../world.zig").World;
+const Sector = @import("../world.zig").Sector;
+const Player = @import("Player.zig").Player;
 
 ticks: Ticks,
 rs: RenderState,
 world: World,
+
+player: Player,
 
 entities: EntityPool,
 
@@ -48,6 +51,7 @@ pub fn init(allocator: Allocator, opt: GameOptions) !Game {
         .ticks = ticks,
         .rs = rs,
         .world = world,
+        .player = .{ .loc = s0.id, .pos = .{ 0, 0 } },
         .entities = entities,
     };
 }
@@ -73,7 +77,12 @@ pub fn render(self: *Game) !void {
     var ent_iter = self.entities.iter();
     while (ent_iter.next()) |ent| {
         const ent_data = self.entities.storage.get(ent.id);
-        try self.rs.rect(ent_data.x, ent_data.y, 10, 10);
+        try self.rs.rect(ent_data.x, ent_data.y, 8, 8);
+    }
+
+    {
+        const x, const y = self.player.pos;
+        try self.rs.rect(x, y, 10, 10);
     }
 
     try self.rs.draw();

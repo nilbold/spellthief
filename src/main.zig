@@ -5,7 +5,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const options = @import("options");
 
-const Game = @import("Game.zig");
+const Game = @import("game/mod.zig").Game;
 
 const c = @cImport({
     @cDefine("SDL_DISABLE_OLD_NAMES", {});
@@ -57,6 +57,8 @@ pub fn main() !void {
         game.update();
         try game.render();
 
+        // just so we don't thrash as much when vsync is disabled
+        // TODO: a more elegant solution
         std.time.sleep(std.time.ns_per_ms);
     }
 }
