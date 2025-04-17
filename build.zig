@@ -42,4 +42,15 @@ pub fn build(b: *std.Build) void {
 
     const run = b.step("run", "Run executable");
     run.dependOn(&run_exe.step);
+
+    const test_exe = b.addTest(.{
+        .name = "unit tests",
+        .root_module = exe.root_module,
+    });
+
+    const tests = b.step("test", "Run unit tests");
+
+    b.installArtifact(test_exe);
+    const run_tests = b.addRunArtifact(test_exe);
+    tests.dependOn(&run_tests.step);
 }

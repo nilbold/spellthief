@@ -123,9 +123,9 @@ test "pagination" {
     try expect(page_data2.?.page[0].? == 30);
 
     const page_ptr = &paged.data.items[0];
-    paged.remove(2);
+    _ = paged.remove(2);
     try expect(page_ptr.*.?.len == 1);
 
-    paged.remove(0);
+    _ = paged.remove(0);
     try expect(page_ptr.* == null);
 }

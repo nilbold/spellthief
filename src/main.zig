@@ -68,3 +68,13 @@ inline fn err(value: bool) error{SdlError}!void {
         return error.SdlError;
     }
 }
+
+test {
+    const util = @import("util/mod.zig");
+    const render = @import("render/mod.zig");
+    const game = @import("game/mod.zig");
+
+    _ = util;
+    _ = render;
+    _ = game;
+}
